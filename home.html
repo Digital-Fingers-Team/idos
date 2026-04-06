@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="home_title">تشخيص فوري للأعراض | الصفحة الرئيسية</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Design System Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Global Settings Logic -->
+    <script src="global-settings.js"></script>
+    <script src="auth-check.js"></script>
+    <style>
+        .hidden {
+            display: none !important;
+        }
+
+        #loginMessage {
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .message--error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .message--success {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+    </style>
+</head>
+<body class="animate-fade-in">
+    <header class="header">
+        <div class="container header-container">
+            <a href="home.html" class="logo">
+                <i class="fas fa-stethoscope logo-icon"></i>
+                <span class="logo-text" data-i18n="logo">تشخيص فوري</span>
+            </a>
+            
+            <nav class="nav-desktop">
+                <ul class="nav-menu">
+                    <li><a href="home.html" class="nav-link active"><i class="fas fa-home"></i> <span data-i18n="home">الرئيسية</span></a></li>
+                    <li><a href="diagnosis.html" class="nav-link"><i class="fas fa-microscope"></i> <span data-i18n="diagnosis">التشخيص</span></a></li>
+                    <li><a href="chat.html" class="nav-link"><i class="fas fa-robot"></i> <span data-i18n="chat">محادثة AI</span></a></li>
+                    <li><a href="hospitals.html" class="nav-link"><i class="fas fa-hospital"></i> <span data-i18n="hospitals">المستشفيات</span></a></li>
+                    <li><a href="settings.html" class="nav-link"><i class="fas fa-cog"></i> <span data-i18n="settings">الإعدادات</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="user-actions" style="display: flex; align-items: center; gap: 1rem;">
+                <div class="user-profile-btn" id="userProfile" data-i18n-title="user_profile_title">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="menu-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="grid grid-2 hero-grid align-center">
+                    <div class="hero-content">
+                        <span class="hero-badge"><i class="fas fa-bolt"></i> <span data-i18n="hero_badge">منصة صحة رقمية متكاملة</span></span>
+                        <h1 class="hero-title" data-i18n="hero_title">تشخيص ذكي للأعراض مع متابعة فورية لحالتك الصحية</h1>
+                        <p class="hero-desc" data-i18n="hero_desc">ابدأ رحلتك مع منصة تشخيص فوري للأعراض لتحصل على توصيات دقيقة، خريطة للمستشفيات القريبة، ومحادثة مع مساعد طبي ذكي.</p>
+                        <div class="flex flex-wrap">
+                            <a href="diagnosis.html" class="btn btn-primary btn-round"><i class="fas fa-stethoscope"></i> <span data-i18n="start_diagnosis">ابدأ التشخيص الآن</span></a>
+                            <a href="chat.html" class="btn btn-outline btn-round" style="border-color: white; color: white;"><i class="fas fa-robot"></i> <span data-i18n="talk_ai">تحدث مع المساعد الذكي</span></a>
+                        </div>
+                        
+                        <div class="flex flex-wrap" style="gap: 3rem; margin-top: 4rem;">
+                            <div>
+                                <h3 style="font-size: 2rem; font-weight: 800;">120K+</h3>
+                                <p style="opacity: 0.8; font-size: 0.9rem;" data-i18n="stat_sessions">جلسة تشخيص ناجحة</p>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 2rem; font-weight: 800;">95%</h3>
+                                <p style="opacity: 0.8; font-size: 0.9rem;" data-i18n="stat_satisfaction">رضا المستخدمين</p>
+                            </div>
+                            <div>
+                                <h3 style="font-size: 2rem; font-weight: 800;">24/7</h3>
+                                <p style="opacity: 0.8; font-size: 0.9rem;" data-i18n="stat_support">دعم واستشارات</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="hero-visual" style="display: flex; justify-content: center;">
+                        <div class="card" style="max-width: 320px; text-align: center; transform: rotate(2deg); transition: transform 0.5s;">
+                            <i class="fas fa-brain" style="font-size: 4rem; color: var(--primary); margin-bottom: 1.5rem; display: block;"></i>
+                            <h3 class="mb-2" style="font-size: 1.75rem; font-weight: 800;" data-i18n="instant_diagnosis_title">التشخيص الفوري</h3>
+                            <p class="mb-3" style="color: var(--text-muted);" data-i18n="instant_diagnosis_desc">تحليل دقيق للأعراض باستخدام أحدث تقنيات الذكاء الاصطناعي</p>
+                            <a href="diagnosis.html" class="btn btn-primary btn-full btn-round"><span data-i18n="try_now">جربه الآن</span></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="text-center mb-4">
+                    <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem;" data-i18n="services_title">خدمات المنصة</h2>
+                    <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto;" data-i18n="services_desc">مجموعة أدوات متكاملة لمتابعة صحتك من مكان واحد</p>
+                </div>
+                
+                <div class="grid grid-3">
+                    <div class="card">
+                        <i class="fas fa-diagnoses mb-3" style="font-size: 3rem; color: var(--primary);"></i>
+                        <h3 class="mb-2" style="font-size: 1.5rem; font-weight: 700;" data-i18n="feature_symptoms_title">تشخيص الأعراض</h3>
+                        <p class="mb-3" style="color: var(--text-muted);" data-i18n="feature_symptoms_desc">تحليل دقيق للأعراض باستخدام قاعدة بيانات واسعة يتم تحديثها باستمرار</p>
+                        <a href="diagnosis.html" style="color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <span data-i18n="go_to_diagnosis">انتقل لصفحة التشخيص</span> <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="card">
+                        <i class="fas fa-robot mb-3" style="font-size: 3rem; color: var(--primary);"></i>
+                        <h3 class="mb-2" style="font-size: 1.5rem; font-weight: 700;" data-i18n="feature_chat_title">محادثة طبية فورية</h3>
+                        <p class="mb-3" style="color: var(--text-muted);" data-i18n="feature_chat_desc">تواصل مع مساعد طبي افتراضي للحصول على نصائح مبدئية حول حالتك</p>
+                        <a href="chat.html" style="color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <span data-i18n="start_chat">ابدأ المحادثة</span> <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="card">
+                        <i class="fas fa-map-marked-alt mb-3" style="font-size: 3rem; color: var(--primary);"></i>
+                        <h3 class="mb-2" style="font-size: 1.5rem; font-weight: 700;" data-i18n="feature_map_title">تحديد أقرب المستشفيات</h3>
+                        <p class="mb-3" style="color: var(--text-muted);" data-i18n="feature_map_desc">خريطة تفاعلية تعتمد على موقعك الجغرافي لعرض أهم المراكز والمستشفيات القريبة</p>
+                        <a href="hospitals.html" style="color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <span data-i18n="view_map">عرض الخريطة</span> <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" style="background-color: var(--bg-gray);">
+            <div class="container">
+                <div class="text-center mb-4">
+                    <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem;" data-i18n="extra_services">خدمات إضافية</h2>
+                    <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto;" data-i18n="extra_desc">خدمات متكاملة لرعاية صحتك بشكل أفضل</p>
+                </div>
+                
+                <div class="grid grid-4">
+                    <div class="card text-center" style="padding: 2.5rem 1.5rem;">
+                        <i class="fas fa-heartbeat mb-3" style="font-size: 2.5rem; color: var(--primary);"></i>
+                        <h3 class="mb-1" style="font-size: 1.25rem;" data-i18n="service_vitals">مراقبة المؤشرات</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="service_vitals_desc">تتبع ومراقبة المؤشرات الحيوية الأساسية لحالتك الصحية</p>
+                    </div>
+                    <div class="card text-center" style="padding: 2.5rem 1.5rem;">
+                        <i class="fas fa-calendar-check mb-3" style="font-size: 2.5rem; color: var(--primary);"></i>
+                        <h3 class="mb-1" style="font-size: 1.25rem;" data-i18n="service_appointments">مواعيد الطبيب</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="service_appointments_desc">حجز مواعيد مع الأطباء المتخصصين بسهولة وسرعة</p>
+                    </div>
+                    <div class="card text-center" style="padding: 2.5rem 1.5rem;">
+                        <i class="fas fa-pills mb-3" style="font-size: 2.5rem; color: var(--primary);"></i>
+                        <h3 class="mb-1" style="font-size: 1.25rem;" data-i18n="service_meds">إدارة الأدوية</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="service_meds_desc">تنظيم وجدولة الأدوية والجرعات والمتابعة اليومية</p>
+                    </div>
+                    <div class="card text-center" style="padding: 2.5rem 1.5rem;">
+                        <i class="fas fa-file-medical mb-3" style="font-size: 2.5rem; color: var(--primary);"></i>
+                        <h3 class="mb-1" style="font-size: 1.25rem;" data-i18n="service_records">السجل الصحي</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;" data-i18n="service_records_desc">تخزين وتنظيم السجلات والتقارير الطبية بشكل آمن</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" style="background: var(--gradient-accent); color: white; text-align: center; position: relative; overflow: hidden;">
+            <div class="container" style="position: relative; z-index: 2;">
+                <h2 style="font-size: 3rem; font-weight: 900; margin-bottom: 1rem;" data-i18n="emergency_title">رقم الطوارئ الموحد</h2>
+                <p style="font-size: 1.25rem; opacity: 0.9; margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto;" data-i18n="emergency_desc">اتصل فوراً في الحالات الطارئة. هذا الرقم يعمل على مدار 24 ساعة.</p>
+                <div style="font-size: 3.5rem; font-weight: 900; margin-bottom: 2rem; display: inline-block; background: rgba(255,255,255,0.2); padding: 0.5rem 3rem; border-radius: var(--radius-full); border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px);">123</div>
+                <br>
+                <a href="tel:123" class="btn btn-primary btn-round" style="background: white; color: var(--accent); padding: 1.25rem 4rem; font-size: 1.2rem;">
+                    <i class="fas fa-phone"></i> <span data-i18n="call_now">اتصل الآن</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer style="background-color: var(--secondary); color: white; padding: 5rem 0 2rem; margin-top: 4rem;">
+        <div class="container">
+            <div class="grid grid-4 footer-grid">
+                <div>
+                    <div class="logo mb-3 footer-logo">
+                        <i class="fas fa-stethoscope logo-icon" style="color: var(--primary-light);"></i>
+                        <span class="logo-text" style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" data-i18n="logo">تشخيص فوري</span>
+                    </div>
+                    <p style="color: var(--text-light); line-height: 1.8;" data-i18n="hero_desc">منصة رقمية متكاملة لتشخيص الأعراض وتقديم الرعاية الصحية الذكية.</p>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="quick_links">روابط سريعة</h3>
+                    <ul class="sidebar-menu">
+                        <li><a href="home.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="home">الرئيسية</span></a></li>
+                        <li><a href="diagnosis.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="diagnosis">التشخيص</span></a></li>
+                        <li><a href="chat.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="chat">محادثة AI</span></a></li>
+                        <li><a href="hospitals.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="hospitals">المستشفيات</span></a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="contact_us">اتصل بنا</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-envelope" style="color: var(--primary-light);"></i>
+                            <span>support@idos.com</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-phone" style="color: var(--primary-light);"></i>
+                            <span>+20 123 456 7890</span>
+                        </li>
+                        <li class="flex footer-social" style="margin-top: 1rem;">
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="instagram"><i class="fab fa-instagram"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="text-center" style="padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-light); font-size: 0.9rem;">
+                <p data-i18n="copyright">جميع الحقوق محفوظة © 2026 تشخيص فوري للأعراض. تصميم وتطوير ✨</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

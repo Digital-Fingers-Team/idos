@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="diagnosis_title">تشخيص فوري للأعراض | التحليل الذكي</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Design System Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Global Settings Logic -->
+    <script src="global-settings.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <style>
+        /* Page Specific Styles */
+        .diagnosis-container {
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+        
+        .symptom-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-soft);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            border: 1px solid var(--primary-light);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .symptom-tag button {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .diagnosis-step {
+            display: none;
+        }
+
+        .diagnosis-step.active {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-gray);
+            border-radius: var(--radius-full);
+            margin-bottom: 3rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            width: 33%;
+            transition: width 0.3s ease;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-white);
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .autocomplete-item:hover {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body class="animate-fade-in">
+    <header class="header">
+        <div class="container header-container">
+            <a href="home.html" class="logo">
+                <i class="fas fa-stethoscope logo-icon"></i>
+                <span class="logo-text" data-i18n="logo">تشخيص فوري</span>
+            </a>
+            
+            <nav class="nav-desktop">
+                <ul class="nav-menu">
+                    <li><a href="home.html" class="nav-link"><i class="fas fa-home"></i> <span data-i18n="home">الرئيسية</span></a></li>
+                    <li><a href="diagnosis.html" class="nav-link active"><i class="fas fa-microscope"></i> <span data-i18n="diagnosis">التشخيص</span></a></li>
+                    <li><a href="chat.html" class="nav-link"><i class="fas fa-robot"></i> <span data-i18n="chat">محادثة AI</span></a></li>
+                    <li><a href="hospitals.html" class="nav-link"><i class="fas fa-hospital"></i> <span data-i18n="hospitals">المستشفيات</span></a></li>
+                    <li><a href="settings.html" class="nav-link"><i class="fas fa-cog"></i> <span data-i18n="settings">الإعدادات</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="user-actions" style="display: flex; align-items: center; gap: 1rem;">
+                <div class="user-profile-btn" id="userProfile" data-i18n-title="user_profile_title">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="menu-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="diagnosis-container">
+            <div class="text-center mt-4 mb-4">
+                <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem;" data-i18n="diagnosis_title">التحليل الذكي للأعراض</h1>
+                <p style="color: var(--text-muted);" data-i18n="diagnosis_subtitle">أدخل الأعراض التي تشعر بها للحصول على تشخيص دقيق ومبني على بيانات طبية</p>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 33%;"></div>
+            </div>
+
+            <div id="step1" class="diagnosis-step active">
+                <div class="card mb-4">
+                    <h2 class="mb-3" style="font-size: 1.5rem; font-weight: 800;" data-i18n="symptoms_question">ما هي الأعراض التي تشعر بها؟</h2>
+                    <p class="mb-3" style="color: var(--text-muted);" data-i18n="symptoms_desc">اكتب العرض ثم اضغط "إضافة" أو اختر من الاقتراحات</p>
+                    
+                    <div class="form-group">
+                        <div style="position: relative;">
+                            <div style="display: flex; gap: 1rem;">
+                                <input type="text" id="symptomInput" class="form-input" data-i18n-placeholder="symptom_placeholder" style="flex: 1;" autocomplete="off">
+                                <button id="addSymptomBtn" class="btn btn-primary"><i class="fas fa-plus"></i> <span data-i18n="add_btn">إضافة</span></button>
+                            </div>
+                            <div id="autocompleteList" class="autocomplete-items hidden"></div>
+                        </div>
+                    </div>
+
+                    <div id="selectedSymptoms" class="mb-3" style="display: flex; flex-wrap: wrap; gap: 0.75rem; min-height: 50px; padding: 1rem; background: var(--bg-gray); border-radius: var(--radius-md);">
+                        <span class="muted" id="noSymptoms" data-i18n="no_symptoms">لم يتم إضافة أعراض بعد</span>
+                    </div>
+
+                    <div style="text-align: left; margin-bottom: 1.5rem;">
+                        <button id="clearSymptomsBtn" class="btn btn-ghost btn-small" style="color: var(--danger);"><i class="fas fa-trash-alt"></i> <span data-i18n="clear_all">مسح الكل</span></button>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="mb-2" style="font-size: 1rem; font-weight: 700;" data-i18n="suggestions_title">اقتراحات شائعة:</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <button class="btn btn-ghost btn-round btn-small suggest-btn" data-i18n="symptom_stomach">بطني بتوجعني</button>
+                            <button class="btn btn-ghost btn-round btn-small suggest-btn" data-i18n="symptom_fever">سخونية</button>
+                            <button class="btn btn-ghost btn-round btn-small suggest-btn" data-i18n="symptom_cough">كحة</button>
+                            <button class="btn btn-ghost btn-round btn-small suggest-btn" data-i18n="symptom_vision">زغللة في عيني</button>
+                            <button class="btn btn-ghost btn-round btn-small suggest-btn" data-i18n="symptom_breath">نهجان</button>
+                            <button class="btn btn-ghost btn-round btn-small suggest-btn" data-i18n="symptom_tired">تعبان وهمدان</button>
+                            <button class="btn btn-ghost btn-round btn-small suggest-btn" data-i18n="symptom_back">ضهري بيوجعني</button>
+                        </div>
+                    </div>
+
+                    <button id="toStep2" class="btn btn-primary btn-full btn-round">
+                        <span data-i18n="next_step">المتابعة للخطوة التالية</span> <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="step2" class="diagnosis-step">
+                <div class="card mb-4">
+                    <h2 class="mb-3" style="font-size: 1.5rem; font-weight: 800;" data-i18n="extra_info_title">معلومات إضافية</h2>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="age_label">العمر</label>
+                        <input type="number" id="userAge" class="form-input" data-i18n-placeholder="age_placeholder">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="gender_label">الجنس</label>
+                        <div class="grid grid-2" style="gap: 1rem;">
+                            <label class="btn btn-outline btn-full" style="cursor: pointer;">
+                                <input type="radio" name="gender" value="male" style="margin-left: 0.5rem;"> <span data-i18n="male">ذكر</span>
+                            </label>
+                            <label class="btn btn-outline btn-full" style="cursor: pointer;">
+                                <input type="radio" name="gender" value="female" style="margin-left: 0.5rem;"> <span data-i18n="female">أنثى</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex">
+                        <button id="backToStep1" class="btn btn-ghost btn-round" style="flex: 1;"><i class="fas fa-arrow-right"></i> <span data-i18n="back_btn">رجوع</span></button>
+                        <button id="toResults" class="btn btn-primary btn-round" style="flex: 2;"><span data-i18n="final_analysis">بدء التحليل النهائي</span> <i class="fas fa-microscope"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="results" class="diagnosis-step">
+                <div id="loadingAnimation" class="text-center mb-4" style="display: none;">
+                    <div style="margin: 2rem 0;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
+                        <p class="mt-2" style="font-weight: 700;" data-i18n="analyzing">جاري تحليل الأعراض ومطابقتها مع قاعدة البيانات الطبية...</p>
+                    </div>
+                </div>
+
+                <div id="resultsList" style="display: none;">
+                    <!-- Dynamic results will be injected here by diagnosis.js -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="background-color: var(--secondary); color: white; padding: 5rem 0 2rem; margin-top: 4rem;">
+        <div class="container">
+            <div class="grid grid-4 footer-grid">
+                <div>
+                    <div class="logo mb-3 footer-logo">
+                        <i class="fas fa-stethoscope logo-icon" style="color: var(--primary-light);"></i>
+                        <span class="logo-text" style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" data-i18n="logo">تشخيص فوري</span>
+                    </div>
+                    <p style="color: var(--text-light); line-height: 1.8;" data-i18n="hero_desc">منصة رقمية متكاملة لتشخيص الأعراض وتقديم الرعاية الصحية الذكية.</p>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="quick_links">روابط سريعة</h3>
+                    <ul class="sidebar-menu">
+                        <li><a href="home.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="home">الرئيسية</span></a></li>
+                        <li><a href="diagnosis.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="diagnosis">التشخيص</span></a></li>
+                        <li><a href="chat.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="chat">محادثة AI</span></a></li>
+                        <li><a href="hospitals.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="hospitals">المستشفيات</span></a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="contact_us">اتصل بنا</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-envelope" style="color: var(--primary-light);"></i>
+                            <span>support@idos.com</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-phone" style="color: var(--primary-light);"></i>
+                            <span>+20 123 456 7890</span>
+                        </li>
+                        <li class="flex footer-social" style="margin-top: 1rem;">
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="instagram"><i class="fab fa-instagram"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="text-center" style="padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-light); font-size: 0.9rem;">
+                <p data-i18n="copyright">جميع الحقوق محفوظة © 2026 تشخيص فوري للأعراض. تصميم وتطوير ✨</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="diseases-data.js"></script>
+    <script src="diagnosis.js"></script>
+</body>
+</html>

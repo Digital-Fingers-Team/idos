@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="settings_title">الإعدادات والتخصيص | IDOS</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Design System Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Global Settings Logic -->
+    <script src="global-settings.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <style>
+        .settings-nav {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+        
+        .settings-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .settings-nav-item:hover, .settings-nav-item.active {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+        
+        .settings-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .settings-card {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .settings-card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-gray);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .settings-card-body {
+            padding: 1.5rem;
+        }
+        
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+        
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+    </style>
+</head>
+<body class="animate-fade-in">
+    <header class="header">
+        <div class="container header-container">
+            <a href="home.html" class="logo">
+                <i class="fas fa-stethoscope logo-icon"></i>
+                <span class="logo-text" data-i18n="logo">تشخيص فوري</span>
+            </a>
+            
+            <nav class="nav-desktop">
+                <ul class="nav-menu">
+                    <li><a href="home.html" class="nav-link"><i class="fas fa-home"></i> <span data-i18n="home">الرئيسية</span></a></li>
+                    <li><a href="diagnosis.html" class="nav-link"><i class="fas fa-microscope"></i> <span data-i18n="diagnosis">التشخيص</span></a></li>
+                    <li><a href="chat.html" class="nav-link"><i class="fas fa-robot"></i> <span data-i18n="chat">محادثة AI</span></a></li>
+                    <li><a href="hospitals.html" class="nav-link"><i class="fas fa-hospital"></i> <span data-i18n="hospitals">المستشفيات</span></a></li>
+                    <li><a href="settings.html" class="nav-link active"><i class="fas fa-cog"></i> <span data-i18n="settings">الإعدادات</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="user-actions" style="display: flex; align-items: center; gap: 1rem;">
+                <div class="user-profile-btn" id="userProfile" data-i18n-title="user_profile_title">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="menu-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="settings-grid">
+            <aside class="settings-nav">
+                <div class="settings-nav-item active">
+                    <i class="fas fa-user-circle"></i> <span data-i18n="account_settings">الملف الشخصي</span>
+                </div>
+                <div class="settings-nav-item">
+                    <i class="fas fa-palette"></i> <span data-i18n="theme">المظهر</span>
+                </div>
+                <div class="settings-nav-item">
+                    <i class="fas fa-bell"></i> <span data-i18n="app_notifications">الإشعارات</span>
+                </div>
+                <div class="settings-nav-item">
+                    <i class="fas fa-shield-alt"></i> <span data-i18n="privacy">الخصوصية</span>
+                </div>
+                <div class="settings-nav-item logout-btn" style="color: var(--danger);">
+                    <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">تسجيل الخروج</span>
+                </div>
+            </aside>
+
+            <div class="settings-content">
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fas fa-user-circle" style="font-size: 1.5rem; color: var(--primary);"></i>
+                        <h2 style="font-size: 1.25rem; font-weight: 800;" data-i18n="account_settings">إعدادات الحساب</h2>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="setting-row">
+                            <div>
+                                <div style="font-weight: 700;" data-i18n="name_label">اسم المستخدم</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="name_desc">الاسم الذي يظهر للآخرين</div>
+                            </div>
+                            <button class="btn btn-ghost btn-small btn-round" data-i18n="edit">تعديل</button>
+                        </div>
+                        <div class="setting-row">
+                            <div>
+                                <div style="font-weight: 700;" data-i18n="email_label">البريد الإلكتروني</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);" id="userEmailDisplay">user@example.com</div>
+                            </div>
+                            <button class="btn btn-ghost btn-small btn-round" data-i18n="edit">تغيير</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="fas fa-palette" style="font-size: 1.5rem; color: var(--primary);"></i>
+                        <h2 style="font-size: 1.25rem; font-weight: 800;" data-i18n="theme">تفضيلات المظهر</h2>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="setting-row">
+                            <div>
+                                <div style="font-weight: 700;" data-i18n="dark_mode">الوضع المظلم</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="theme_desc">تغيير ألوان الواجهة للوضع الليلي</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="darkModeToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-row">
+                            <div>
+                                <div style="font-weight: 700;" data-i18n="language">اللغة</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="language_desc">اختر لغة واجهة المستخدم</div>
+                            </div>
+                            <div class="btn-group" id="languageBtnGroup">
+                                <button class="btn btn-ghost btn-small" data-lang="ar" style="border-radius: 20px 0 0 20px; border: 1px solid var(--border-color);">العربية</button>
+                                <button class="btn btn-ghost btn-small" data-lang="en" style="border-radius: 0 20px 20px 0; border: 1px solid var(--border-color); border-right: none;">English</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card" style="border-color: rgba(239, 68, 68, 0.2);">
+                    <div class="settings-card-header" style="background: rgba(239, 68, 68, 0.05);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; color: var(--danger);"></i>
+                        <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--danger);" data-i18n="advanced_actions">منطقة الخطر</h2>
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="setting-row">
+                            <div>
+                                <div style="font-weight: 700;" data-i18n="delete_all_data">حذف الحساب</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="delete_all_data_desc">سيتم حذف جميع بياناتك نهائياً</div>
+                            </div>
+                            <button class="btn btn-outline btn-round" style="border-color: var(--danger); color: var(--danger);" data-i18n="delete_all">حذف نهائي</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="background-color: var(--secondary); color: white; padding: 5rem 0 2rem; margin-top: 4rem;">
+        <div class="container">
+            <div class="grid grid-4 footer-grid">
+                <div>
+                    <div class="logo mb-3 footer-logo">
+                        <i class="fas fa-stethoscope logo-icon" style="color: var(--primary-light);"></i>
+                        <span class="logo-text" style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" data-i18n="logo">تشخيص فوري</span>
+                    </div>
+                    <p style="color: var(--text-light); line-height: 1.8;" data-i18n="hero_desc">منصة رقمية متكاملة لتشخيص الأعراض وتقديم الرعاية الصحية الذكية.</p>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="quick_links">روابط سريعة</h3>
+                    <ul class="sidebar-menu">
+                        <li><a href="home.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="home">الرئيسية</span></a></li>
+                        <li><a href="diagnosis.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="diagnosis">التشخيص</span></a></li>
+                        <li><a href="chat.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="chat">محادثة AI</span></a></li>
+                        <li><a href="hospitals.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="hospitals">المستشفيات</span></a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="contact_us">اتصل بنا</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-envelope" style="color: var(--primary-light);"></i>
+                            <span>support@idos.com</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-phone" style="color: var(--primary-light);"></i>
+                            <span>+20 123 456 7890</span>
+                        </li>
+                        <li class="flex footer-social" style="margin-top: 1rem;">
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="instagram"><i class="fab fa-instagram"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="text-center" style="padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-light); font-size: 0.9rem;">
+                <p data-i18n="copyright">جميع الحقوق محفوظة © 2026 تشخيص فوري للأعراض. تصميم وتطوير ✨</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Settings Logic
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const languageBtnGroup = document.getElementById('languageBtnGroup');
+
+        // Initial state from GlobalSettings
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof GlobalSettings !== 'undefined') {
+                darkModeToggle.checked = GlobalSettings.getSetting('theme') === 'dark';
+                const currentLang = GlobalSettings.getSetting('language');
+                updateLanguageButtons(currentLang);
+            }
+        });
+
+        function updateLanguageButtons(lang) {
+            const buttons = languageBtnGroup.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.dataset.lang === lang) {
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('btn-ghost');
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-ghost');
+                }
+            });
+        }
+
+        darkModeToggle.addEventListener('change', (e) => {
+            const theme = e.target.checked ? 'dark' : 'light';
+            if (typeof GlobalSettings !== 'undefined') {
+                GlobalSettings.updateSetting('theme', theme);
+            }
+        });
+
+        languageBtnGroup.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (btn && typeof GlobalSettings !== 'undefined') {
+                const newLang = btn.dataset.lang;
+                GlobalSettings.updateSetting('language', newLang);
+                updateLanguageButtons(newLang);
+            }
+        });
+    </script>
+</body>
+</html>

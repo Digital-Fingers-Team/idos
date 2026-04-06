@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="login_title">تسجيل الدخول | IDOS</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Design System Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Global Settings Logic -->
+    <script src="global-settings.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-primary);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-card {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: var(--shadow-xl);
+            z-index: 10;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        .login-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .input-icon-wrapper {
+            position: relative;
+        }
+        
+        .input-icon-wrapper i {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+        
+        .input-icon-wrapper .form-input {
+            padding-right: 3rem;
+        }
+
+        /* Decorative background elements */
+        .circle-decor {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .decor-1 {
+            width: 400px;
+            height: 400px;
+            top: -100px;
+            left: -100px;
+        }
+
+        .decor-2 {
+            width: 300px;
+            height: 300px;
+            bottom: -50px;
+            right: -50px;
+        }
+
+        @media (max-width: 768px) {
+            .decor-1 { width: 200px; height: 200px; top: -50px; left: -50px; }
+            .decor-2 { width: 150px; height: 150px; bottom: -25px; right: -25px; }
+        }
+
+        .login-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .auth-subtitle {
+            color: var(--text-muted);
+        }
+
+        .or-divider {
+            margin: 1.5rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .or-text {
+            background: var(--bg-white);
+            padding: 0 1rem;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .or-line {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            border: 0;
+            border-top: 1px solid var(--border-color);
+            z-index: 1;
+        }
+
+        .footer-desc {
+            margin-bottom: 0.75rem;
+        }
+
+        .create-account-box,
+        .demo-access {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .demo-access__title {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        .demo-access__desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .demo-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .lang-toggle-auth {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            z-index: 100;
+        }
+
+        [dir="ltr"] .lang-toggle-auth {
+            left: auto;
+            right: 2rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #loginMessage {
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .message--error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .message--success {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        @media (max-width: 576px) {
+            .login-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .demo-actions {
+                grid-template-columns: 1fr;
+            }
+            .lang-toggle-auth {
+                top: 1rem;
+                left: 1rem;
+            }
+            [dir="ltr"] .lang-toggle-auth {
+                right: 1rem;
+                left: auto;
+            }
+        }
+    </style>
+</head>
+<body class="animate-fade-in">
+    <div class="lang-toggle-auth">
+        <button class="lang-switcher-global" id="authLangToggle">
+            <i class="fas fa-language"></i>
+            <span id="authLangText">English</span>
+        </button>
+    </div>
+
+    <div class="login-page">
+        <!-- Decor -->
+        <div class="circle-decor decor-1"></div>
+        <div class="circle-decor decor-2"></div>
+
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h1 id="authTitle" class="auth-title" data-i18n="auth_welcome">مرحباً بك</h1>
+                <p id="authSubtitle" class="auth-subtitle" data-i18n="auth_subtitle_login">سجل الدخول للمتابعة في منصة IDOS</p>
+            </div>
+
+            <div id="loginMessage" class="hidden"></div>
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="email_label">البريد الإلكتروني</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" class="form-input" placeholder="example@mail.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" data-i18n="password_label">كلمة المرور</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                        <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; accent-color: var(--primary);"> <span data-i18n="remember_me">تذكرني</span>
+                    </label>
+                    <a href="#" style="color: var(--primary); font-weight: 700; font-size: 0.9rem;" data-i18n="forgot_password">نسيت كلمة المرور؟</a>
+                </div>
+
+                <div class="login-actions">
+                    <button type="submit" class="btn btn-primary btn-full btn-round" style="padding: 1rem;">
+                        <span data-i18n="login_btn">تسجيل الدخول</span> <i class="fas fa-sign-in-alt"></i>
+                    </button>
+
+                    <button type="button" id="showRegisterBtn" class="btn btn-outline btn-full btn-round" style="padding: 0.95rem;">
+                        <span data-i18n="register_btn">إنشاء حساب جديد</span> <i class="fas fa-user-plus"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="name_label">الاسم الكامل</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="regName" class="form-input" placeholder="أحمد محمد" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" data-i18n="email_label">البريد الإلكتروني</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="regEmail" class="form-input" placeholder="example@mail.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" data-i18n="password_label">كلمة المرور</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="regPassword" class="form-input" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="login-actions">
+                    <button type="submit" class="btn btn-primary btn-full btn-round" style="padding: 1rem;">
+                        <span data-i18n="create_account_btn">إنشاء الحساب</span> <i class="fas fa-user-plus"></i>
+                    </button>
+
+                    <button type="button" id="showLoginBtn" class="btn btn-outline btn-full btn-round" style="padding: 0.95rem;">
+                        <span data-i18n="have_account">لديك حساب بالفعل؟</span> <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="or-divider">
+                <span class="or-text" data-i18n="or_by">أو بواسطة</span>
+                <hr class="or-line">
+            </div>
+
+            <button type="button" class="btn btn-outline btn-full btn-round" style="padding: 0.8rem;">
+                <i class="fab fa-google"></i> Google
+            </button>
+
+            <div class="login-footer">
+                <div class="create-account-box">
+                    <p class="footer-desc" data-i18n="auth_footer_desc">تقدر تدخل مباشرة أو تنشئ حساب جديد، وكلهم هيوصلوك للصفحة الرئيسية.</p>
+                </div>
+
+                <div class="demo-access">
+                    <div class="demo-access__title">
+                        <i class="fas fa-kit-medical"></i>
+                        <span data-i18n="demo_title">نظام تجريبي للطوارئ</span>
+                    </div>
+                    <p class="demo-access__desc" data-i18n="demo_desc">للدخول السريع وقت الحاجة، اختر نوع الحساب المناسب.</p>
+                    <div class="demo-actions">
+                        <button type="button" class="btn btn-outline btn-round demo-login-btn" data-role="patient">
+                            <i class="fas fa-user-injured"></i> <span data-i18n="login_as_patient">سجل كمريض</span>
+                        </button>
+                        <button type="button" class="btn btn-outline btn-round demo-login-btn" data-role="doctor">
+                            <i class="fas fa-user-doctor"></i> <span data-i18n="login_as_doctor">سجل كطبيب</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>

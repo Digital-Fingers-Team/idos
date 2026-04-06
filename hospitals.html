@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="hospitals_title">المستشفيات والمراكز الطبية | IDOS</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Design System Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Global Settings Logic -->
+    <script src="global-settings.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <style>
+        .hospitals-layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            height: calc(100vh - 200px);
+        }
+        
+        .hospitals-sidebar {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-gray);
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .hospital-list-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .hospital-card-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .hospital-card-item:hover {
+            background: var(--primary-soft);
+        }
+        
+        .hospital-card-item.active {
+            border-right: 4px solid var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .hospital-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .hospital-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .hospital-location {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .hospital-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .map-container {
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            position: relative;
+        }
+
+        .map-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            backdrop-filter: blur(4px);
+            transition: var(--transition-normal);
+        }
+
+        .map-loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .filter-bar {
+            background: var(--bg-white);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-search {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .hospital-type-tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: var(--radius-full);
+            background: var(--bg-gray);
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        @media (max-width: 992px) {
+            .hospitals-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .map-container {
+                height: 400px;
+                order: -1;
+            }
+            .filter-bar {
+                flex-direction: column;
+            }
+            .filter-search, #specialtyFilter, .filter-bar button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="animate-fade-in">
+    <header class="header">
+        <div class="container header-container">
+            <a href="home.html" class="logo">
+                <i class="fas fa-stethoscope logo-icon"></i>
+                <span class="logo-text" data-i18n="logo">تشخيص فوري</span>
+            </a>
+            
+            <nav class="nav-desktop">
+                <ul class="nav-menu">
+                    <li><a href="home.html" class="nav-link"><i class="fas fa-home"></i> <span data-i18n="home">الرئيسية</span></a></li>
+                    <li><a href="diagnosis.html" class="nav-link"><i class="fas fa-microscope"></i> <span data-i18n="diagnosis">التشخيص</span></a></li>
+                    <li><a href="chat.html" class="nav-link"><i class="fas fa-robot"></i> <span data-i18n="chat">محادثة AI</span></a></li>
+                    <li><a href="hospitals.html" class="nav-link active"><i class="fas fa-hospital"></i> <span data-i18n="hospitals">المستشفيات</span></a></li>
+                    <li><a href="settings.html" class="nav-link"><i class="fas fa-cog"></i> <span data-i18n="settings">الإعدادات</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="user-actions" style="display: flex; align-items: center; gap: 1rem;">
+                <div class="user-profile-btn" id="userProfile" data-i18n-title="user_profile_title">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="menu-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mt-4">
+        <div class="filter-bar">
+            <div class="filter-search">
+                <input type="text" class="form-input" data-i18n-placeholder="search_hospital_placeholder" id="searchInput">
+            </div>
+            <select class="form-input" style="width: auto;" id="specialtyFilter">
+                <option value="all" data-i18n="all_specialties">جميع التخصصات</option>
+                <option value="hospital" data-i18n="filter_hospitals">مستشفيات</option>
+                <option value="clinic" data-i18n="filter_clinics">عيادات</option>
+                <option value="pharmacy" data-i18n="filter_pharmacies">صيدليات</option>
+            </select>
+            <button class="btn btn-primary btn-round" id="useLocationBtn"><i class="fas fa-location-arrow"></i> <span data-i18n="use_location">موقعي الحالي</span></button>
+        </div>
+
+        <div class="hospitals-layout">
+            <aside class="hospitals-sidebar">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title" data-i18n="nearby_hospitals">المستشفيات القريبة</h2>
+                    <p class="sidebar-subtitle" id="resultsCount" data-i18n="searching">جاري البحث عن المستشفيات القريبة...</p>
+                </div>
+                <div class="hospital-list-container" id="hospitalList">
+                    <!-- Hospital items will be here -->
+                </div>
+            </aside>
+
+            <div class="map-container">
+                <div class="map-loading-overlay" id="mapLoading">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
+                    <p style="font-weight: 700; color: var(--text-main);" data-i18n="fetching_location">جاري تحديد موقعك وجلب البيانات الحقيقية...</p>
+                </div>
+                <div id="map"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="background-color: var(--secondary); color: white; padding: 5rem 0 2rem; margin-top: 4rem;">
+        <div class="container">
+            <div class="grid grid-4 footer-grid">
+                <div>
+                    <div class="logo mb-3 footer-logo">
+                        <i class="fas fa-stethoscope logo-icon" style="color: var(--primary-light);"></i>
+                        <span class="logo-text" style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" data-i18n="logo">تشخيص فوري</span>
+                    </div>
+                    <p style="color: var(--text-light); line-height: 1.8;" data-i18n="hero_desc">منصة رقمية متكاملة لتشخيص الأعراض وتقديم الرعاية الصحية الذكية.</p>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="quick_links">روابط سريعة</h3>
+                    <ul class="sidebar-menu">
+                        <li><a href="home.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="home">الرئيسية</span></a></li>
+                        <li><a href="diagnosis.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="diagnosis">التشخيص</span></a></li>
+                        <li><a href="chat.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="chat">محادثة AI</span></a></li>
+                        <li><a href="hospitals.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="hospitals">المستشفيات</span></a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="contact_us">اتصل بنا</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-envelope" style="color: var(--primary-light);"></i>
+                            <span>support@idos.com</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-phone" style="color: var(--primary-light);"></i>
+                            <span>+20 123 456 7890</span>
+                        </li>
+                        <li class="flex footer-social" style="margin-top: 1rem;">
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="instagram"><i class="fab fa-instagram"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="text-center" style="padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-light); font-size: 0.9rem;">
+                <p data-i18n="copyright">جميع الحقوق محفوظة © 2026 تشخيص فوري للأعراض. تصميم وتطوير ✨</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const hospitalList = document.getElementById('hospitalList');
+        const resultsCount = document.getElementById('resultsCount');
+        const mapLoading = document.getElementById('mapLoading');
+        const useLocationBtn = document.getElementById('useLocationBtn');
+        const specialtyFilter = document.getElementById('specialtyFilter');
+        const searchInput = document.getElementById('searchInput');
+
+        // Map Global Variables
+        let map;
+        let userMarker;
+        let hospitalMarkers = L.layerGroup();
+        let allHospitals = [];
+        let userCoords = null;
+
+        // Haversine formula for real distance (KM)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth Radius
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Initialize Map
+        function initMap(lat = 30.0444, lng = 31.2357) {
+            if (map) return;
+            map = L.map('map').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            hospitalMarkers.addTo(map);
+        }
+
+        // Fetch Real Data from Overpass API
+        async function fetchNearbyMedical(lat, lng) {
+            userCoords = { lat, lng };
+            mapLoading.classList.remove('hidden');
+            const radius = 30000; // 30km (Approx 60 mins drive)
+            
+            const query = `
+                [out:json][timeout:30];
+                (
+                  node["amenity"~"hospital|clinic|pharmacy|doctors"](around:${radius},${lat},${lng});
+                  way["amenity"~"hospital|clinic|pharmacy|doctors"](around:${radius},${lat},${lng});
+                );
+                out center 100;
+            `;
+            
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                allHospitals = data.elements.map(el => {
+                    const hLat = el.lat || el.center.lat;
+                    const hLon = el.lon || el.center.lon;
+                    const name = el.tags.name || el.tags['name:ar'] || el.tags['name:en'] || 'منشأة طبية';
+                    
+                    // Distance calculation
+                    const distKm = calculateDistance(lat, lng, hLat, hLon);
+                    // Time estimation (Avg 30km/h in urban areas)
+                    const timeMins = Math.round((distKm / 30) * 60);
+
+                    let type = 'طبية';
+                    if (el.tags.amenity === 'hospital') type = 'مستشفى';
+                    else if (el.tags.amenity === 'clinic') type = 'عيادة';
+                    else if (el.tags.amenity === 'pharmacy') type = 'صيدلية';
+                    else if (el.tags.amenity === 'doctors') type = 'طبيب';
+
+                    return {
+                        id: el.id,
+                        name,
+                        lat: hLat,
+                        lng: hLon,
+                        type,
+                        amenity: el.tags.amenity,
+                        distance: distKm,
+                        time: timeMins,
+                        address: el.tags['addr:street'] || el.tags['addr:city'] || 'موقع محدد',
+                        phone: el.tags.phone || el.tags['contact:phone'] || null
+                    };
+                }).sort((a, b) => a.distance - b.distance);
+
+                filterAndRender();
+            } catch (error) {
+                console.error('Error:', error);
+                resultsCount.textContent = 'حدث خطأ أثناء جلب البيانات.';
+            } finally {
+                mapLoading.classList.add('hidden');
+            }
+        }
+
+        function filterAndRender() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filterType = specialtyFilter.value;
+
+            const filtered = allHospitals.filter(h => {
+                const matchesSearch = h.name.toLowerCase().includes(searchTerm);
+                const matchesType = filterType === 'all' || h.amenity === filterType;
+                return matchesSearch && matchesType;
+            });
+
+            renderList(filtered);
+        }
+
+        function renderList(hospitals) {
+            hospitalList.innerHTML = '';
+            hospitalMarkers.clearLayers();
+
+            if (hospitals.length === 0) {
+                resultsCount.textContent = 'لا توجد نتائج مطابقة.';
+                return;
+            }
+
+            resultsCount.textContent = `تم العثور على ${hospitals.length} منشأة قريبة في نطاق 60 دقيقة`;
+
+            hospitals.forEach(h => {
+                // Add Marker
+                const marker = L.marker([h.lat, h.lng])
+                    .bindPopup(`<b>${h.name}</b><br>${h.type}<br>${h.distance.toFixed(1)} كم (${h.time} دقيقة)`);
+                hospitalMarkers.addLayer(marker);
+
+                // Add to Sidebar
+                const item = document.createElement('div');
+                item.className = 'hospital-card-item';
+                item.innerHTML = `
+                    <div class="hospital-card-header">
+                        <h3 class="hospital-name">${h.name}</h3>
+                        <span class="hospital-type-tag">${h.type}</span>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--primary); font-weight: 700;">
+                        <span><i class="fas fa-car"></i> ${h.time} دقيقة</span>
+                        <span><i class="fas fa-road"></i> ${h.distance.toFixed(1)} كم</span>
+                    </div>
+                    <p class="hospital-location"><i class="fas fa-map-marker-alt"></i> ${h.address}</p>
+                    <div class="hospital-actions">
+                        ${h.phone ? `<a href="tel:${h.phone}" class="btn btn-ghost btn-small btn-round" style="flex: 1;"><i class="fas fa-phone"></i> اتصال</a>` : ''}
+                        <button class="btn btn-primary btn-small btn-round" onclick="focusOnMap(${h.lat}, ${h.lng})" style="flex: 1;"><i class="fas fa-location-arrow"></i> عرض</button>
+                    </div>
+                `;
+                hospitalList.appendChild(item);
+            });
+        }
+
+        window.focusOnMap = function(lat, lng) {
+            map.setView([lat, lng], 17);
+            hospitalMarkers.eachLayer(layer => {
+                if (layer.getLatLng().lat === lat && layer.getLatLng().lng === lng) {
+                    layer.openPopup();
+                }
+            });
+            if (window.innerWidth < 992) {
+                document.querySelector('.map-container').scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        function getLocation() {
+            mapLoading.classList.remove('hidden');
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        initMap(latitude, longitude);
+                        map.setView([latitude, longitude], 14);
+
+                        if (userMarker) userMarker.remove();
+                        userMarker = L.marker([latitude, longitude], {
+                            icon: L.icon({
+                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41],
+                                popupAnchor: [1, -34],
+                                shadowSize: [41, 41]
+                            })
+                        }).addTo(map).bindPopup('أنت هنا').openPopup();
+
+                        fetchNearbyMedical(latitude, longitude);
+                    },
+                    () => {
+                        initMap();
+                        resultsCount.textContent = 'يرجى تفعيل الموقع الجغرافي.';
+                        mapLoading.classList.add('hidden');
+                    }
+                );
+            }
+        }
+
+        // Listeners
+        useLocationBtn.addEventListener('click', getLocation);
+        searchInput.addEventListener('input', filterAndRender);
+        specialtyFilter.addEventListener('change', filterAndRender);
+
+        // Auto-detect on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(getLocation, 500);
+        });
+    </script>
+</body>
+</html>

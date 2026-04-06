@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="chat_title">المساعد الطبي الذكي | IDOS</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Design System Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Libraries -->
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <script src="global-settings.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <style>
+        /* Chat Specific Styles */
+        .chat-layout {
+            height: calc(100vh - 180px);
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .chat-sidebar {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-history-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .chat-main {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background: var(--bg-gray);
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-lg);
+            position: relative;
+            animation: fadeInUp 0.3s ease;
+        }
+        
+        .message-user {
+            align-self: flex-end;
+            background: var(--gradient-primary);
+            color: white;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-ai {
+            align-self: flex-start;
+            background: var(--bg-white);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+            display: block;
+        }
+        
+        .chat-input-area {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-white);
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 1rem;
+            background: var(--bg-gray);
+            padding: 0.5rem;
+            border-radius: var(--radius-full);
+            border: 2px solid transparent;
+            transition: var(--transition-fast);
+        }
+        
+        .chat-input-wrapper:focus-within {
+            border-color: var(--primary);
+            background: var(--bg-white);
+            box-shadow: 0 0 0 4px var(--primary-soft);
+        }
+        
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            outline: none;
+            color: var(--text-main);
+        }
+        
+        .history-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .history-item:hover {
+            background: var(--primary-soft);
+        }
+        
+        .history-item.active {
+            background: var(--primary-soft);
+            border-right: 4px solid var(--primary);
+        }
+
+        .history-item-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .history-item-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding-left: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chat-layout {
+                grid-template-columns: 1fr;
+                height: calc(100vh - 140px);
+            }
+            .chat-sidebar {
+                display: none;
+            }
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body class="animate-fade-in">
+    <header class="header">
+        <div class="container header-container">
+            <a href="home.html" class="logo">
+                <i class="fas fa-stethoscope logo-icon"></i>
+                <span class="logo-text" data-i18n="logo">تشخيص فوري</span>
+            </a>
+            
+            <nav class="nav-desktop">
+                <ul class="nav-menu">
+                    <li><a href="home.html" class="nav-link"><i class="fas fa-home"></i> <span data-i18n="home">الرئيسية</span></a></li>
+                    <li><a href="diagnosis.html" class="nav-link"><i class="fas fa-microscope"></i> <span data-i18n="diagnosis">التشخيص</span></a></li>
+                    <li><a href="chat.html" class="nav-link active"><i class="fas fa-robot"></i> <span data-i18n="chat">محادثة AI</span></a></li>
+                    <li><a href="hospitals.html" class="nav-link"><i class="fas fa-hospital"></i> <span data-i18n="hospitals">المستشفيات</span></a></li>
+                    <li><a href="settings.html" class="nav-link"><i class="fas fa-cog"></i> <span data-i18n="settings">الإعدادات</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="user-actions" style="display: flex; align-items: center; gap: 1rem;">
+                <div class="user-profile-btn" id="userProfile" data-i18n-title="user_profile_title">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="menu-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="chat-layout">
+            <aside class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    <button class="btn btn-primary btn-full btn-round"><i class="fas fa-plus"></i> <span data-i18n="new_chat">محادثة جديدة</span></button>
+                </div>
+                <div class="chat-history-list">
+                    <div class="history-item active">
+                        <div class="history-item-title" data-i18n="chat_history_1">استشارة حول آلام الظهر</div>
+                        <div class="history-item-time" data-i18n="time_2h">منذ ساعتين</div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-item-title" data-i18n="chat_history_2">أعراض الإنفلونزا</div>
+                        <div class="history-item-time" data-i18n="time_yesterday">أمس</div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="chat-main">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message message-ai">
+                        <div data-i18n="chat_welcome">أهلاً بك! أنا مساعدك الطبي الذكي. كيف يمكنني مساعدتك اليوم؟</div>
+                        <span class="message-time">10:00 ص</span>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <form id="chatForm" class="chat-input-wrapper">
+                        <input type="text" id="chatInput" class="chat-input" data-i18n-placeholder="type_message" autocomplete="off">
+                        <div class="chat-actions">
+                            <button type="button" class="btn btn-ghost btn-round" style="width: 40px; height: 40px; padding: 0;" data-i18n-title="attach_file"><i class="fas fa-paperclip"></i></button>
+                            <button type="submit" class="btn btn-primary btn-round" style="width: 45px; height: 45px; padding: 0;" data-i18n-title="send"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer style="background-color: var(--secondary); color: white; padding: 5rem 0 2rem; margin-top: 4rem;">
+        <div class="container">
+            <div class="grid grid-4 footer-grid">
+                <div>
+                    <div class="logo mb-3 footer-logo">
+                        <i class="fas fa-stethoscope logo-icon" style="color: var(--primary-light);"></i>
+                        <span class="logo-text" style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" data-i18n="logo">تشخيص فوري</span>
+                    </div>
+                    <p style="color: var(--text-light); line-height: 1.8;" data-i18n="hero_desc">منصة رقمية متكاملة لتشخيص الأعراض وتقديم الرعاية الصحية الذكية.</p>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="quick_links">روابط سريعة</h3>
+                    <ul class="sidebar-menu">
+                        <li><a href="home.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="home">الرئيسية</span></a></li>
+                        <li><a href="diagnosis.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="diagnosis">التشخيص</span></a></li>
+                        <li><a href="chat.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="chat">محادثة AI</span></a></li>
+                        <li><a href="hospitals.html" class="nav-link" style="padding: 0; color: var(--text-light);"><span data-i18n="hospitals">المستشفيات</span></a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="mb-3" style="font-size: 1.25rem; font-weight: 700;" data-i18n="contact_us">اتصل بنا</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-envelope" style="color: var(--primary-light);"></i>
+                            <span>support@idos.com</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-light);">
+                            <i class="fas fa-phone" style="color: var(--primary-light);"></i>
+                            <span>+20 123 456 7890</span>
+                        </li>
+                        <li class="flex footer-social" style="margin-top: 1rem;">
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="btn btn-ghost" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" data-i18n-title="instagram"><i class="fab fa-instagram"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="text-center" style="padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-light); font-size: 0.9rem;">
+                <p data-i18n="copyright">جميع الحقوق محفوظة © 2026 تشخيص فوري للأعراض. تصميم وتطوير ✨</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Chat Logic
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const chatMessages = document.getElementById('chatMessages');
+
+        function appendMessage(text, role) {
+            const time = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message message-${role}`;
+            msgDiv.innerHTML = `
+                <div>${text}</div>
+                <span class="message-time">${time}</span>
+            `;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+        }
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            appendMessage(text, 'user');
+            chatInput.value = '';
+
+            // Mock AI response
+            setTimeout(() => {
+                appendMessage('شكراً لسؤالك. بناءً على ما ذكرته، أنصحك بالراحة ومراقبة الأعراض. هل تشعر بأي ألم آخر؟', 'ai');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
