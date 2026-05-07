@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة تحكم المدير - IDOS Hospital</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #06b6d4;
+      --accent: #8b5cf6;
+      --light: #f8fafc;
+      --dark: #1e293b;
+      --text: #334155;
+      --text-light: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+      --sidebar-width: 260px;
+    }
+
+    .dark-mode {
+      --light: #0f172a;
+      --dark: #f1f5f9;
+      --text: #cbd5e1;
+      --text-light: #94a3b8;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Tajawal", "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+    }
+
+    body.dark-mode {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    }
+
+    body.rtl {
+      direction: rtl;
+    }
+
+    body.ltr {
+      direction: ltr;
+    }
+
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+      color: white;
+      padding: 20px 0;
+      box-shadow: var(--shadow);
+      z-index: 100;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      transition: var(--transition);
+    }
+
+    body.rtl .sidebar {
+      right: 0;
+    }
+
+    body.rtl .main-content {
+      margin-right: var(--sidebar-width);
+    }
+
+    body.ltr .sidebar {
+      left: 0;
+    }
+
+    body.ltr .main-content {
+      margin-left: var(--sidebar-width);
+      margin-right: 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    .logo img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .logo-text {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, white, #93c5fd);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .user-info {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .user-name {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .user-type {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: inline-block;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0 15px;
+      margin-bottom: 20px;
+    }
+
+    .menu-item {
+      margin-bottom: 5px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .menu-item a {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      color: white;
+      text-decoration: none;
+      transition: var(--transition);
+      border-radius: 10px;
+    }
+
+    .menu-item a:hover,
+    .menu-item.active a {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    body.rtl .menu-item a:hover {
+      transform: translateX(-5px);
+    }
+
+    body.ltr .menu-item a:hover {
+      transform: translateX(5px);
+    }
+
+    .menu-item i {
+      font-size: 18px;
+      width: 24px;
+    }
+
+    body.rtl .menu-item i {
+      margin-left: 12px;
+    }
+
+    body.ltr .menu-item i {
+      margin-right: 12px;
+    }
+
+    .menu-item span {
+      flex: 1;
+    }
+
+    .sidebar-footer {
+      padding: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      margin-top: auto;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      transition: var(--transition);
+    }
+
+    .header {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 20px 25px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    body.dark-mode .header {
+      background: var(--light);
+    }
+
+    .header h1 {
+      color: var(--primary);
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .dark-mode-toggle,
+    .logout-btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .dark-mode-toggle {
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+    }
+
+    .dark-mode-toggle:hover {
+      background: rgba(37, 99, 235, 0.2);
+    }
+
+    .logout-btn {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    body.dark-mode .stat-card {
+      background: var(--light);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .stat-icon {
+      width: 55px;
+      height: 55px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+    }
+
+    body.rtl .stat-icon {
+      margin-left: 15px;
+    }
+
+    body.ltr .stat-icon {
+      margin-right: 15px;
+    }
+
+    .stat-info {
+      flex: 1;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: var(--text-light);
+      font-size: 13px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    body.dark-mode .dashboard-card {
+      background: var(--light);
+    }
+
+    .dashboard-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .card-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: white;
+      background: var(--primary);
+    }
+
+    body.rtl .card-icon {
+      margin-left: 15px;
+    }
+
+    body.ltr .card-icon {
+      margin-right: 15px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-content {
+      color: var(--text-light);
+      line-height: 1.5;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .card-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .card-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .reports-section {
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      text-align: center;
+    }
+
+    body.dark-mode .reports-section {
+      background: var(--light);
+    }
+
+    .reports-title {
+      color: var(--primary);
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .reports-description {
+      color: var(--text-light);
+      margin-bottom: 20px;
+    }
+
+    .reports-btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .reports-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background-color: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 900px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 25px;
+      position: relative;
+    }
+
+    body.dark-mode .modal-content {
+      background-color: var(--light);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: var(--transition);
+    }
+
+    body.rtl .close-btn {
+      left: 25px;
+    }
+
+    body.ltr .close-btn {
+      right: 25px;
+    }
+
+    .close-btn:hover {
+      color: var(--text);
+    }
+
+    .modal-title {
+      color: var(--primary);
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      transition: var(--transition);
+      background-color: #f8fafc;
+    }
+
+    body.dark-mode .form-group input,
+    body.dark-mode .form-group textarea,
+    body.dark-mode .form-group select {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--dark);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+
+    .content-list {
+      list-style: none;
+      margin-top: 15px;
+    }
+
+    .content-item {
+      padding: 15px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    body.dark-mode .content-item {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .content-item:hover {
+      background: rgba(37, 99, 235, 0.05);
+      border-radius: 12px;
+    }
+
+    .content-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .content-meta {
+      display: flex;
+      gap: 15px;
+      color: var(--text-light);
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+
+    .content-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .content-btn {
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .content-btn:hover {
+      background: rgba(37, 99, 235, 0.2);
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .status-pending {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    .status-approved {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .status-rejected {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .badge {
+      background: var(--danger);
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 10px;
+      margin-right: 5px;
+    }
+
+    .prep-detail-container {
+      margin-top: 20px;
+    }
+
+    .prep-detail-item {
+      margin-bottom: 15px;
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 12px;
+    }
+
+    body.dark-mode .prep-detail-item {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .prep-detail-label {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .prep-detail-value {
+      color: var(--text);
+    }
+
+    .review-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .approve-btn {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .reject-btn {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .download-btn {
+      background: rgba(6, 182, 212, 0.1);
+      color: var(--secondary);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 80px;
+      }
+
+      .sidebar-header .logo-text,
+      .user-info,
+      .menu-item span {
+        display: none;
+      }
+
+      body.rtl .main-content {
+        margin-right: 80px;
+      }
+
+      body.ltr .main-content {
+        margin-left: 80px;
+      }
+
+      .menu-item a {
+        justify-content: center;
+        padding: 12px;
+      }
+
+      .menu-item i {
+        margin: 0;
+        font-size: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .stats-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+
+      .header-actions {
+        justify-content: center;
+      }
+
+      .content-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .content-actions {
+        align-self: flex-end;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .main-content {
+        padding: 15px;
+      }
+
+      .sidebar {
+        width: 70px;
+      }
+
+      body.rtl .main-content {
+        margin-right: 70px;
+      }
+
+      body.ltr .main-content {
+        margin-left: 70px;
+      }
+
+      .modal-content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body class="rtl" id="mainBody">
+  <div class="dashboard-container">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <img src="logo.png" alt="IDOS Hospital" />
+        </div>
+        <div class="logo-text">IDOS</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">المدير</div>
+          <div class="user-type" id="user-type">مدير النظام</div>
+        </div>
+      </div>
+
+      <ul class="sidebar-menu">
+        <li class="menu-item active"><a href="admin-dashboard.html"><i
+              class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+        <li class="menu-item"><a href="admin-users.html"><i class="fas fa-users"></i><span>إدارة المستخدمين</span></a>
+        </li>
+        <li class="menu-item"><a href="admin-hospital-3d.html"><i class="fas fa-cube"></i><span>عرض المستشفى
+              3D</span></a></li>
+        <li class="menu-item"><a href="admin-schedule.html"><i class="fas fa-calendar-alt"></i><span>إدارة
+              المواعيد</span></a></li>
+        <li class="menu-item"><a href="admin-reports.html"><i class="fas fa-file-medical"></i><span>التقارير
+              الطبية</span></a></li>
+        <li class="menu-item"><a href="admin-messages.html"><i class="fas fa-envelope"></i><span>الرسائل</span></a></li>
+        <li class="menu-item"><a href="admin-payments.html"><i class="fas fa-credit-card"></i><span>المدفوعات</span></a>
+        </li>
+        <li class="menu-item"><a href="admin-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+        <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+      </ul>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>لوحة تحكم المدير - IDOS Hospital</h1>
+        <div class="header-actions">
+          <button class="dark-mode-toggle" id="darkModeToggle">
+            <i class="fas fa-moon"></i>
+            <span>الوضع الداكن</span>
+          </button>
+          <button class="logout-btn" id="logoutBtn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="admin-content">
+        <div class="stats-cards">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #2563eb, #3b82f6)">
+              <i class="fas fa-procedures"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value" id="patients-count">0</div>
+              <div class="stat-label">عدد المرضى</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #06b6d4, #22d3ee)">
+              <i class="fas fa-user-md"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value" id="doctors-count">0</div>
+              <div class="stat-label">عدد الأطباء</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa)">
+              <i class="fas fa-building"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value" id="departments-count">0</div>
+              <div class="stat-label">عدد الأقسام</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24)">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value" id="pending-files-count">0</div>
+              <div class="stat-label">ملفات بانتظار المراجعة</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-user-cog"></i></div>
+              <div class="card-title">إدارة المستخدمين</div>
+            </div>
+            <div class="card-content">إدارة حسابات المرضى والأطباء والإدارة.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="window.location.href='admin-users.html'">
+                <i class="fas fa-cog"></i> إدارة
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+              <div class="card-title">التقارير والإحصائيات</div>
+            </div>
+            <div class="card-content">عرض التقارير والإحصائيات الشاملة للمستشفى.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="window.location.href='admin-reports.html'">
+                <i class="fas fa-chart-simple"></i> عرض
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-file-check"></i></div>
+              <div class="card-title">مراجعة الملفات الطبية</div>
+            </div>
+            <div class="card-content">مراجعة الملفات الطبية المرفوعة من الأطباء.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="openFilesReviewModal()">
+                <i class="fas fa-check-circle"></i> مراجعة
+                <span id="badge-count" class="badge" style="display: none;">0</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
+              <div class="card-title">إدارة المواعيد</div>
+            </div>
+            <div class="card-content">إدارة جداول المواعيد وتوزيع الحجوزات.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="window.location.href='admin-schedule.html'">
+                <i class="fas fa-edit"></i> إدارة
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-comments"></i></div>
+              <div class="card-title">التواصل</div>
+            </div>
+            <div class="card-content">التواصل مع الأطباء والمرضى والإدارة.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="window.location.href='admin-messages.html'">
+                <i class="fas fa-comment"></i> مراسلة
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-credit-card"></i></div>
+              <div class="card-title">المدفوعات والفواتير</div>
+            </div>
+            <div class="card-content">إدارة المدفوعات والفواتير الطبية.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="window.location.href='admin-payments.html'">
+                <i class="fas fa-money-bill"></i> إدارة
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+              <div class="card-title">متابعة تقدم المرضى</div>
+            </div>
+            <div class="card-content">عرض تقارير متابعة الحالات الطبية للمرضى.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="window.location.href='patient-progress.html'">
+                <i class="fas fa-chart-line"></i> عرض
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fas fa-cogs"></i></div>
+              <div class="card-title">إعدادات النظام</div>
+            </div>
+            <div class="card-content">إعدادات النظام العامة وإدارة الصلاحيات.</div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="window.location.href='admin-settings.html'">
+                <i class="fas fa-sliders-h"></i> إعدادات
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reports-section">
+        <h2 class="reports-title">التقارير الشاملة</h2>
+        <p class="reports-description">قم بمراجعة التقارير الشاملة للمستشفى وإحصائيات الأداء للمرضى والأطباء.</p>
+        <button class="reports-btn" onclick="window.location.href='admin-reports.html'">
+          <i class="fas fa-chart-bar"></i> عرض التقارير الشاملة
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="files-review-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('files-review-modal')">&times;</span>
+      <h2 class="modal-title">مراجعة الملفات الطبية</h2>
+      <div id="files-review-content">
+        <div class="form-group">
+          <label>تصفية حسب:</label>
+          <select id="files-filter">
+            <option value="pending">في انتظار المراجعة</option>
+            <option value="approved">تمت الموافقة</option>
+            <option value="rejected">مرفوض</option>
+            <option value="all">جميع الملفات</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>تصفية حسب الطبيب:</label>
+          <select id="doctor-filter">
+            <option value="all">جميع الأطباء</option>
+          </select>
+        </div>
+        <ul class="content-list" id="files-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="file-detail-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('file-detail-modal')">&times;</span>
+      <h2 class="modal-title">تفاصيل الملف الطبي</h2>
+      <div id="file-detail-content">
+        <div class="prep-detail-container" id="file-details"></div>
+        <div class="review-buttons" id="review-buttons"></div>
+        <div class="form-group" id="review-notes-section" style="margin-top: 20px; display: none;">
+          <label>ملاحظات المراجعة:</label>
+          <textarea id="review-notes" rows="4" placeholder="أدخل ملاحظاتك حول الملف الطبي"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+  <script src="core.js"></script>
+  <script>
+    const currentUser = IDOS.currentUser;
+    const currentLanguage = IDOS.currentLanguage;
+
+    // تحديث إحصائيات لوحة التحكم
+    async function updateDashboardStats() {
+      try {
+        const patients = await IDOS.db.users.where("role").equals("patient").count();
+        const doctors = await IDOS.db.users.where("role").equals("doctor").count();
+        
+        // حساب عدد الأقسام الفريدة من الأطباء
+        const doctorsList = await IDOS.db.users.where("role").equals("doctor").toArray();
+        const departments = new Set(doctorsList.map(d => d.department).filter(Boolean));
+
+        // إجمالي المواعيد المعلقة
+        const pendingAppointments = await IDOS.db.appointments.where("status").equals("pending").count();
+
+        document.getElementById("patients-count").textContent = patients;
+        document.getElementById("doctors-count").textContent = doctors;
+        document.getElementById("departments-count").textContent = departments.size || 0;
+        document.getElementById("pending-files-count").textContent = pendingAppointments;
+
+        const badge = document.getElementById("badge-count");
+        if (badge) {
+          if (pendingAppointments > 0) {
+            badge.textContent = pendingAppointments;
+            badge.style.display = "inline-block";
+          } else {
+            badge.style.display = "none";
+          }
+        }
+      } catch (error) {
+        console.error("Error updating stats:", error);
+      }
+    }
+
+    // فتح نافذة مراجعة الملفات (تعديل ليكون مراجعة المواعيد أو الملفات حسب الحاجة)
+    async function openFilesReviewModal() {
+      document.getElementById("files-review-modal").style.display = "flex";
+      // سنوجه المدير لإدارة المواعيد حالياً لأنها الأهم للمزامنة
+      window.location.href = 'admin-schedule.html';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = "none";
+    }
+
+    document.querySelectorAll(".modal").forEach(modal => {
+      modal.addEventListener("click", function (e) {
+        if (e.target === this) {
+          this.style.display = "none";
+        }
+      });
+    });
+
+    // تهيئة الصفحة
+    document.addEventListener("DOMContentLoaded", async () => {
+      if (!currentUser || currentUser.role !== "admin") {
+        window.location.href = "login.html";
+        return;
+      }
+
+      // إضافة حدث تسجيل الخروج من القائمة الجانبية
+      const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+      if (logoutBtnSidebar) {
+        logoutBtnSidebar.addEventListener("click", (e) => {
+          e.preventDefault();
+          IDOS.logout();
+        });
+      }
+
+      // إضافة حدث تسجيل الخروج من الزر العلوي
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          IDOS.logout();
+        });
+      }
+
+      await updateDashboardStats();
+    });
+  </script>
+</body>
+
+</html>

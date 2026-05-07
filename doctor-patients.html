@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مرضاي - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        body.rtl {
+            direction: rtl;
+        }
+
+        body.ltr {
+            direction: ltr;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar {
+            right: 0;
+        }
+
+        body.ltr .sidebar {
+            left: 0;
+        }
+
+        body.rtl .main-content {
+            margin-right: var(--sidebar-width);
+        }
+
+        body.ltr .main-content {
+            margin-left: var(--sidebar-width);
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.rtl .menu-item a:hover {
+            transform: translateX(-5px);
+        }
+
+        body.ltr .menu-item a:hover {
+            transform: translateX(5px);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+        }
+
+        body.rtl .menu-item i {
+            margin-left: 12px;
+        }
+
+        body.ltr .menu-item i {
+            margin-right: 12px;
+        }
+
+        .menu-item span {
+            flex: 1;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .header {
+            background: var(--light);
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .dark-mode-toggle,
+        .logout-btn,
+        .back-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .back-btn {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+        }
+
+        .back-btn:hover {
+            background: rgba(6, 182, 212, 0.2);
+        }
+
+        /* جدول المرضى */
+        .patients-table-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            transition: var(--transition);
+            overflow-x: auto;
+        }
+
+        body.dark-mode .patients-table-container {
+            background: var(--light);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-title h2 {
+            color: var(--primary);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #f8fafc;
+        }
+
+        body.dark-mode .search-bar input {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--dark);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .patients-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        .patients-table th,
+        .patients-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: right;
+        }
+
+        body.dark-mode .patients-table th,
+        body.dark-mode .patients-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .patients-table th {
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .view-btn {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin: 3px;
+        }
+
+        .view-btn:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-light);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            .sidebar-header .logo-text,
+            .user-info,
+            .menu-item span {
+                display: none;
+            }
+            body.rtl .main-content {
+                margin-right: 80px;
+            }
+            body.ltr .main-content {
+                margin-left: 80px;
+            }
+            .menu-item a {
+                justify-content: center;
+                padding: 12px;
+            }
+            .menu-item i {
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            .header-actions {
+                justify-content: center;
+            }
+            .section-title {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 15px;
+            }
+            .sidebar {
+                width: 70px;
+            }
+            body.rtl .main-content {
+                margin-right: 70px;
+            }
+            body.ltr .main-content {
+                margin-left: 70px;
+            }
+        }
+    </style>
+</head>
+
+<body class="rtl">
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo.png" alt="IDOS Hospital" />
+                </div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">د. أحمد علي</div>
+                    <div class="user-type">طبيب</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="doctor-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item active"><a href="doctor-patients.html"><i class="fas fa-users"></i><span>مرضاي</span></a></li>
+                <li class="menu-item"><a href="doctor-appointments.html"><i class="fas fa-calendar-alt"></i><span>المواعيد</span></a></li>
+                <li class="menu-item"><a href="doctor-medical-records.html"><i class="fas fa-file-medical"></i><span>السجلات الطبية</span></a></li>
+                <li class="menu-item"><a href="doctor-messages.html"><i class="fas fa-comments"></i><span>الرسائل</span></a></li>
+                <li class="menu-item"><a href="doctor-reports.html"><i class="fas fa-chart-line"></i><span>التقارير</span></a></li>
+                <li class="menu-item"><a href="doctor-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1><i class="fas fa-users"></i> مرضاي</h1>
+                <div class="header-actions">
+                    <button class="back-btn" onclick="window.location.href='doctor-dashboard.html'">
+                        <i class="fas fa-arrow-right"></i> العودة
+                    </button>
+                    <button class="dark-mode-toggle" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>الوضع الداكن</span>
+                    </button>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>تسجيل الخروج</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="patients-table-container">
+                <div class="section-title">
+                    <h2><i class="fas fa-list"></i> قائمة المرضى</h2>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="بحث عن مريض بالاسم أو البريد الإلكتروني...">
+                </div>
+                <div id="patientsListContainer">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 40px; margin-bottom: 15px; display: block;"></i>
+                        جاري تحميل البيانات...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="core.js"></script>
+    <script>
+        const currentUser = IDOS.currentUser;
+        const currentLanguage = IDOS.currentLanguage;
+
+        // عرض قائمة المرضى
+        async function renderPatients() {
+            const container = document.getElementById("patientsListContainer");
+            const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+            
+            try {
+                // جلب المواعيد الخاصة بهذا الطبيب
+                const myAppointments = await IDOS.db.appointments
+                    .where("doctorId")
+                    .equals(currentUser.id)
+                    .toArray();
+                
+                // استخراج معرفات المرضى
+                const myPatientIds = [...new Set(myAppointments.map(apt => apt.patientId))];
+                
+                // جلب بيانات المرضى
+                let myPatients = await IDOS.db.users
+                    .where("id")
+                    .anyOf(myPatientIds)
+                    .toArray();
+                
+                // إذا لم يكن هناك مرضى مرتبطين بعد، ربما نعرض جميع المرضى في النظام للإدارة أو للتواصل الأولي
+                // لكن حسب الطلب "مرضاي"، سنعرض فقط المرتبطين بمواعيد
+                
+                // تطبيق البحث
+                if (searchTerm) {
+                    myPatients = myPatients.filter(p => 
+                        p.name.toLowerCase().includes(searchTerm) || 
+                        p.email.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                if (myPatients.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash" style="font-size: 48px; margin-bottom: 15px; display: block; opacity: 0.5;"></i>
+                            <p>${currentLanguage === 'ar' ? 'لا يوجد مرضى مسجلين لديك حالياً' : 'No patients registered with you yet'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // إنشاء الجدول
+                let html = `
+                    <table class="patients-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>${currentLanguage === 'ar' ? 'المريض' : 'Patient'}</th>
+                                <th>${currentLanguage === 'ar' ? 'البريد الإلكتروني' : 'Email'}</th>
+                                <th>${currentLanguage === 'ar' ? 'رقم الهاتف' : 'Phone'}</th>
+                                <th>${currentLanguage === 'ar' ? 'الإجراءات' : 'Actions'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                myPatients.forEach((patient, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        ${patient.avatar || patient.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <strong>${patient.name}</strong>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${patient.email}</td>
+                            <td>${patient.phone || "-"}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view-btn" onclick="viewPatient(${patient.id})" title="عرض الملف">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn message-btn" onclick="messagePatient(${patient.id})" title="إرسال رسالة">
+                                        <i class="fas fa-comment"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error("Error rendering patients:", error);
+                container.innerHTML = `<p style="color: red; text-align: center;">حدث خطأ أثناء تحميل البيانات</p>`;
+            }
+        }
+
+        function viewPatient(id) {
+            window.location.href = `doctor-medical-records.html?patientId=${id}`;
+        }
+
+        function messagePatient(id) {
+            window.location.href = `doctor-messages.html?patientId=${id}`;
+        }
+
+        // البحث الفوري
+        document.getElementById("searchInput").addEventListener("input", renderPatients);
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!currentUser || currentUser.role !== "doctor") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+
+            renderPatients();
+        });
+    </script>
+</body>
+</html>

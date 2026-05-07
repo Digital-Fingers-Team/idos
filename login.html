@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="core.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-dark: #3f37c9;
+            --secondary: #7209b7;
+            --accent: #4cc9f0;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --text: #2b2d42;
+            --text-light: #8d99ae;
+            --glass: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius: 16px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --glass: rgba(15, 23, 42, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top left, #1e3a5f, #0f2b4a, #0a1a2e);
+            background-size: 200% 200%;
+            animation: gradientMove 10s ease infinite alternate;
+            position: relative;
+            padding: 20px;
+        }
+
+        @keyframes gradientMove {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            100% {
+                background-position: 100% 100%;
+            }
+        }
+
+        .bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -100px;
+        }
+
+        .bg-circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -50px;
+            right: -50px;
+            animation-delay: -5s;
+        }
+
+        .bg-circle:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 20%;
+            right: 10%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            33% {
+                transform: translate(30px, 50px) rotate(10deg);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) rotate(-10deg);
+            }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            animation: containerAppear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes containerAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .login-section {
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .welcome-header h1 {
+            font-size: 24px;
+            color: var(--text);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .welcome-header p {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            margin-top: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            text-align: right;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 45px 14px 16px;
+            background: white;
+            border: 2px solid #edf2f7;
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 16px;
+            top: 40px;
+            color: var(--text-light);
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .password-toggle {
+            position: absolute;
+            left: 16px;
+            top: 40px;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .additional-options {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            width: 100%;
+        }
+
+        .forgot-password {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .login-button {
+            margin-top: 10px;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Role Selection Styles */
+        .role-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .role-item {
+            cursor: pointer;
+            padding: 12px 8px;
+            background: white;
+            border: 2px solid #edf2f7;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .role-item i {
+            font-size: 20px;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .role-item span {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .role-item.active {
+            border-color: var(--primary);
+            background: rgba(67, 97, 238, 0.05);
+        }
+
+        .role-item.active i, .role-item.active span {
+            color: var(--primary);
+        }
+
+        .register-link {
+            margin-top: 25px;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .register-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .language-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: toastIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%) scale(0.5);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        .toast-success {
+            background: rgba(16, 185, 129, 0.95);
+        }
+
+        .toast-error {
+            background: rgba(239, 68, 68, 0.95);
+        }
+
+        .toast-info {
+            background: rgba(37, 99, 235, 0.95);
+        }
+
+        @media (max-width: 576px) {
+            .login-section {
+                padding: 30px 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation">
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+    </div>
+
+    <button id="language-toggle" class="language-toggle">
+        <i class="fas fa-language"></i>
+        <span id="language-text">English</span>
+    </button>
+
+    <div class="container">
+        <div class="login-section">
+            <div class="logo">
+                <img src="logo.png" alt="IDOS Hospital">
+            </div>
+            <div class="logo-text">IDOS</div>
+
+            <div class="welcome-header">
+                <h1 id="welcome-title">مرحباً بك في IDOS</h1>
+                <p id="welcome-subtitle">نظام إدارة المستشفيات المتكامل</p>
+            </div>
+
+            <form class="login-form" id="login-form">
+                <div class="role-selection">
+                    <div class="role-item active" data-role="patient">
+                        <i class="fas fa-user-injured"></i>
+                        <span id="role-patient">مريض</span>
+                    </div>
+                    <div class="role-item" data-role="doctor">
+                        <i class="fas fa-user-md"></i>
+                        <span id="role-doctor">دكتور</span>
+                    </div>
+                    <div class="role-item" data-role="admin">
+                        <i class="fas fa-user-shield"></i>
+                        <span id="role-admin">إدارة</span>
+                    </div>
+                </div>
+                <input type="hidden" id="selected-role" value="patient">
+
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> <span id="email-label">البريد
+                            الإلكتروني</span></label>
+                    <input type="email" id="email" name="email" placeholder="example@mail.com" required>
+                    <div class="input-icon"><i class="fas fa-envelope"></i></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> <span id="password-label">كلمة
+                            المرور</span></label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    <div class="input-icon"><i class="fas fa-lock"></i></div>
+                    <div class="password-toggle" id="password-toggle">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                </div>
+
+                <div class="additional-options">
+                    <a href="#" class="forgot-password" id="forgot-password">نسيت كلمة المرور؟</a>
+                </div>
+
+                <button type="submit" class="login-button" id="login-button">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span id="login-button-text">تسجيل الدخول</span>
+                </button>
+            </form>
+
+            <div class="register-link">
+                <span id="no-account">ليس لديك حساب؟</span>
+                <a href="register.html" id="create-account">إنشاء حساب جديد</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        let currentLanguage = IDOS.currentLanguage;
+
+        // إظهار/إخفاء كلمة المرور
+        const togglePassword = document.getElementById("password-toggle");
+        const passwordInput = document.getElementById("password");
+        togglePassword.addEventListener("click", () => {
+            const type = passwordInput.type === "password" ? "text" : "password";
+            passwordInput.type = type;
+            togglePassword.innerHTML = `<i class="fas ${type === "password" ? "fa-eye" : "fa-eye-slash"}"></i>`;
+        });
+
+        // اختيار الدور
+        const roleItems = document.querySelectorAll('.role-item');
+        const selectedRoleInput = document.getElementById('selected-role');
+
+        roleItems.forEach(item => {
+            item.addEventListener('click', () => {
+                roleItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                selectedRoleInput.value = item.dataset.role;
+            });
+        });
+
+        // معالجة تسجيل الدخول
+        document.getElementById("login-form").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value.trim().toLowerCase();
+            const password = document.getElementById("password").value;
+            const role = document.getElementById("selected-role").value;
+
+            if (!email || !password) {
+                IDOS.showToast("error", currentLanguage === "ar" ? "يرجى إدخال البريد الإلكتروني وكلمة المرور" : "Please enter email and password");
+                return;
+            }
+
+            const loginButton = document.getElementById("login-button");
+            loginButton.disabled = true;
+            loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التحقق...</span>';
+
+            try {
+                // التأكد من أن قاعدة البيانات مفتوحة
+                if (!IDOS.db.isOpen()) {
+                    await IDOS.db.open();
+                }
+
+                // البحث عن المستخدم
+                const user = await IDOS.db.users.where("email").equals(email).first();
+
+                if (user && user.password === password) {
+                    // تحديث الدور المختار في الواجهة ليتناسب مع الحساب الحقيقي
+                    const userRole = user.role;
+                    roleItems.forEach(i => {
+                        i.classList.remove('active');
+                        if (i.dataset.role === userRole) i.classList.add('active');
+                    });
+                    selectedRoleInput.value = userRole;
+
+                    if (user.status !== "active") {
+                        IDOS.showToast("error", IDOS.currentLanguage === "ar" ? "حسابك غير نشط. يرجى التواصل مع الإدارة" : "Your account is inactive. Please contact admin");
+                        loginButton.disabled = false;
+                        loginButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span id="login-button-text">تسجيل الدخول</span>';
+                        return;
+                    }
+
+                    // حفظ الجلسة بشكل آمن قبل عرض رسالة النجاح
+                    try {
+                        IDOS.currentUser = user;
+                    } catch (sessionErr) {
+                        console.error("Session error:", sessionErr);
+                    }
+
+                    const roleNames = { 'patient': 'مريض', 'doctor': 'دكتور', 'admin': 'إدارة' };
+                    const roleNamesEn = { 'patient': 'Patient', 'doctor': 'Doctor', 'admin': 'Admin' };
+                    const displayRole = IDOS.currentLanguage === "ar" ? roleNames[userRole] : roleNamesEn[userRole];
+
+                    IDOS.showToast("success", IDOS.currentLanguage === "ar" ? 
+                        `تم تسجيل الدخول بنجاح كـ ${displayRole}! جاري تحويلك...` : 
+                        `Logged in successfully as ${displayRole}! Redirecting...`);
+
+                    // التوجيه حسب الدور الفعلي للمستخدم
+                    setTimeout(() => {
+                        const targetPage = {
+                            'admin': 'admin-dashboard.html',
+                            'doctor': 'doctor-dashboard.html',
+                            'patient': 'patient-dashboard.html'
+                        };
+                        window.location.href = targetPage[userRole] || 'index.html';
+                    }, 1000);
+
+                } else {
+                    IDOS.showToast("error", IDOS.currentLanguage === "ar" ? "البريد الإلكتروني أو كلمة المرور غير صحيحة" : "Invalid email or password");
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span id="login-button-text">تسجيل الدخول</span>';
+                }
+
+            } catch (error) {
+                console.error("Login error:", error);
+                IDOS.showToast("error", currentLanguage === "ar" ? "حدث خطأ أثناء تسجيل الدخول" : "Error during login");
+                loginButton.disabled = false;
+                loginButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span id="login-button-text">تسجيل الدخول</span>';
+            }
+        });
+
+        // تبديل اللغة
+        document.getElementById("language-toggle").addEventListener("click", function () {
+            IDOS.currentLanguage = IDOS.currentLanguage === "ar" ? "en" : "ar";
+            location.reload(); // إعادة التحميل لتطبيق اللغة بشكل كامل
+        });
+
+        function updateLanguage() {
+            const translations = {
+                'ar': {
+                    'welcome-title': 'مرحباً بك في IDOS',
+                    'welcome-subtitle': 'نظام إدارة المستشفيات المتكامل',
+                    'email-label': 'البريد الإلكتروني',
+                    'password-label': 'كلمة المرور',
+                    'forgot-password': 'نسيت كلمة المرور؟',
+                    'login-button-text': 'تسجيل الدخول',
+                    'no-account': 'ليس لديك حساب؟',
+                    'create-account': 'إنشاء حساب جديد',
+                    'role-patient': 'مريض',
+                    'role-doctor': 'دكتور',
+                    'role-admin': 'إدارة',
+                    'language-text': 'English'
+                },
+                'en': {
+                    'welcome-title': 'Welcome to IDOS',
+                    'welcome-subtitle': 'Integrated Hospital Management System',
+                    'email-label': 'Email Address',
+                    'password-label': 'Password',
+                    'forgot-password': 'Forgot password?',
+                    'login-button-text': 'Login',
+                    'no-account': "Don't have an account?",
+                    'create-account': 'Create New Account',
+                    'role-patient': 'Patient',
+                    'role-doctor': 'Doctor',
+                    'role-admin': 'Admin',
+                    'language-text': 'العربية'
+                }
+            };
+
+            const lang = IDOS.currentLanguage;
+            Object.keys(translations[lang]).forEach(key => {
+                const el = document.getElementById(key);
+                if (el) el.textContent = translations[lang][key];
+            });
+
+            document.getElementById("email").placeholder = lang === "ar" ? "example@mail.com" : "example@mail.com";
+            document.getElementById("password").placeholder = lang === "ar" ? "••••••••" : "••••••••";
+        }
+
+        // تهيئة
+        document.addEventListener("DOMContentLoaded", () => {
+            updateLanguage();
+        });
+    </script>
+</body>
+
+</html>

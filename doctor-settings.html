@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات الطبيب - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="core.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar { right: 0; }
+        body.ltr .sidebar { left: 0; }
+        body.rtl .main-content { margin-right: var(--sidebar-width); }
+        body.ltr .main-content { margin-left: var(--sidebar-width); }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+            margin-left: 12px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .header { background: var(--light); }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .settings-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        body.dark-mode .settings-section { background: var(--light); }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label { font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select {
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .profile-pic-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .profile-pic {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><img src="logo.png" alt="IDOS"></div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name">تحميل...</div>
+                    <div class="user-type">طبيب</div>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="doctor-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item"><a href="doctor-patients.html"><i class="fas fa-users"></i><span>مرضاي</span></a></li>
+                <li class="menu-item"><a href="doctor-appointments.html"><i class="fas fa-calendar-alt"></i><span>المواعيد</span></a></li>
+                <li class="menu-item"><a href="doctor-medical-records.html"><i class="fas fa-file-medical"></i><span>السجلات الطبية</span></a></li>
+                <li class="menu-item"><a href="doctor-messages.html"><i class="fas fa-comments"></i><span>الرسائل</span></a></li>
+                <li class="menu-item"><a href="doctor-reports.html"><i class="fas fa-chart-line"></i><span>التقارير</span></a></li>
+                <li class="menu-item active"><a href="doctor-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>إعدادات الطبيب</h1>
+                <div class="header-actions">
+                    <button class="dark-mode-toggle" id="darkModeToggle"><i class="fas fa-moon"></i></button>
+                    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="section-title"><i class="fas fa-user-md"></i> الملف المهني</div>
+                
+                <div class="profile-pic-container">
+                    <div class="profile-pic" id="userAvatar"></div>
+                    <div>
+                        <button class="btn-secondary" onclick="document.getElementById('avatarInput').click()">تغيير الصورة</button>
+                        <input type="file" id="avatarInput" hidden accept="image/*">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>الاسم الكامل</label>
+                        <input type="text" id="fullName">
+                    </div>
+                    <div class="form-group">
+                        <label>البريد الإلكتروني</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label>القسم / التخصص</label>
+                        <input type="text" id="department">
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <button class="btn-primary" onclick="saveProfile()">حفظ التغييرات</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="section-title"><i class="fas fa-lock"></i> الأمان</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>كلمة المرور الحالية</label>
+                        <input type="password" id="currentPass">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور الجديدة</label>
+                        <input type="password" id="newPass">
+                    </div>
+                </div>
+                <div style="margin-top: 25px;">
+                    <button class="btn-primary" style="background: var(--secondary);" onclick="changePassword()">تحديث كلمة المرور</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const user = IDOS.currentUser;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!user || user.role !== "doctor") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+
+            loadUserData();
+        });
+
+        function loadUserData() {
+            document.getElementById("fullName").value = user.name || "";
+            document.getElementById("email").value = user.email || "";
+            document.getElementById("phone").value = user.phone || "";
+            document.getElementById("department").value = user.department || "";
+        }
+
+        async function saveProfile() {
+            const data = {
+                name: document.getElementById("fullName").value,
+                email: document.getElementById("email").value,
+                phone: document.getElementById("phone").value,
+                department: document.getElementById("department").value
+            };
+
+            await db.users.update(user.id, data);
+            
+            const updatedUser = { ...user, ...data };
+            IDOS.currentUser = updatedUser;
+            IDOS.syncUI();
+            IDOS.showToast("success", "تم تحديث الملف المهني");
+        }
+
+        document.getElementById("avatarInput").onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const base64 = event.target.result;
+                    await db.users.update(user.id, { avatar: base64 });
+                    user.avatar = base64;
+                    IDOS.currentUser = user;
+                    IDOS.syncUI();
+                    IDOS.showToast("success", "تم تحديث الصورة الشخصية");
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        async function changePassword() {
+            const current = document.getElementById("currentPass").value;
+            const newP = document.getElementById("newPass").value;
+            
+            const dbUser = await db.users.get(user.id);
+            if (dbUser.password !== current) {
+                IDOS.showToast("error", "كلمة المرور الحالية غير صحيحة");
+                return;
+            }
+
+            await db.users.update(user.id, { password: newP });
+            IDOS.showToast("success", "تم تغيير كلمة المرور");
+            document.getElementById("currentPass").value = "";
+            document.getElementById("newPass").value = "";
+        }
+
+        // Initial load of user data is already handled in DOMContentLoaded
+    </script>
+</body>
+</html>

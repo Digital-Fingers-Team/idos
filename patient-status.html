@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حالتي الصحية - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        body.rtl {
+            direction: rtl;
+        }
+
+        body.ltr {
+            direction: ltr;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar {
+            right: 0;
+        }
+
+        body.ltr .sidebar {
+            left: 0;
+        }
+
+        body.rtl .main-content {
+            margin-right: var(--sidebar-width);
+        }
+
+        body.ltr .main-content {
+            margin-left: var(--sidebar-width);
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.rtl .menu-item a:hover {
+            transform: translateX(-5px);
+        }
+
+        body.ltr .menu-item a:hover {
+            transform: translateX(5px);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+        }
+
+        body.rtl .menu-item i {
+            margin-left: 12px;
+        }
+
+        body.ltr .menu-item i {
+            margin-right: 12px;
+        }
+
+        .menu-item span {
+            flex: 1;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .header {
+            background: var(--light);
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .dark-mode-toggle,
+        .logout-btn,
+        .back-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .back-btn {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+        }
+
+        .back-btn:hover {
+            background: rgba(6, 182, 212, 0.2);
+        }
+
+        /* بطاقة الملف الشخصي */
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .profile-card {
+            background: var(--light);
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .profile-info h2 {
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+
+        .profile-badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-blood {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .badge-status {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-allergy {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        /* شبكة المحتوى */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .info-card {
+            background: var(--light);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.dark-mode .card-title {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* قائمة التقارير الطبية */
+        .report-list {
+            list-style: none;
+        }
+
+        .report-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        body.dark-mode .report-item {
+            border-bottom-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .report-item:last-child {
+            border-bottom: none;
+        }
+
+        .report-info h4 {
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+
+        .report-date {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .download-btn {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+
+        /* قائمة الأدوية */
+        .medication-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        body.dark-mode .medication-item {
+            border-bottom-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .medication-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .medication-info h4 {
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+
+        .medication-info p {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* مخطط العلامات الحيوية */
+        .chart-container {
+            height: 250px;
+            margin-top: 15px;
+        }
+
+        .vital-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .vital-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        body.dark-mode .vital-item {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .vital-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .vital-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            .sidebar-header .logo-text,
+            .user-info,
+            .menu-item span {
+                display: none;
+            }
+            body.rtl .main-content {
+                margin-right: 80px;
+            }
+            body.ltr .main-content {
+                margin-left: 80px;
+            }
+            .menu-item a {
+                justify-content: center;
+                padding: 12px;
+            }
+            .menu-item i {
+                margin: 0;
+            }
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            .header-actions {
+                justify-content: center;
+            }
+            .profile-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .vital-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 15px;
+            }
+            .sidebar {
+                width: 70px;
+            }
+            body.rtl .main-content {
+                margin-right: 70px;
+            }
+            body.ltr .main-content {
+                margin-left: 70px;
+            }
+        }
+    </style>
+</head>
+
+<body class="rtl">
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo.png" alt="IDOS Hospital" />
+                </div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">محمد المريض</div>
+                    <div class="user-type">مريض</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="patient-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item active"><a href="patient-status.html"><i class="fas fa-file-medical"></i><span>حالتي الصحية</span></a></li>
+                <li class="menu-item"><a href="patient-appointments.html"><i class="fas fa-calendar-plus"></i><span>حجز موعد</span></a></li>
+                <li class="menu-item"><a href="patient-messages.html"><i class="fas fa-comments"></i><span>التواصل</span></a></li>
+                <li class="menu-item"><a href="patient-payments.html"><i class="fas fa-credit-card"></i><span>مدفوعاتي</span></a></li>
+                <li class="menu-item"><a href="patient-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1><i class="fas fa-heartbeat"></i> حالتي الصحية والتقارير الطبية</h1>
+                <div class="header-actions">
+                    <button class="view-btn" onclick="scrollToReports()" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 10px 15px; border-radius: 12px; font-weight: 700;">
+                        <i class="fas fa-file-medical"></i> سجل التقارير
+                    </button>
+                    <button class="back-btn" onclick="window.location.href='patient-dashboard.html'">
+                        <i class="fas fa-arrow-right"></i> العودة
+                    </button>
+                    <button class="dark-mode-toggle" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>الوضع الداكن</span>
+                    </button>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>تسجيل الخروج</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- بطاقة الملف الشخصي -->
+            <div class="profile-card">
+                <div class="profile-avatar" id="userAvatar">
+                    م
+                </div>
+                <div class="profile-info">
+                    <h2 id="fullName">محمد محمود</h2>
+                    <div class="profile-badges">
+                        <span class="badge badge-blood" id="bloodType">زمرة الدم: A+</span>
+                        <span class="badge badge-status" id="healthStatus">الحالة: مستقرة</span>
+                        <span class="badge badge-allergy" id="allergies">حساسية: البنسلين</span>
+                    </div>
+                    <button class="view-btn" id="openLatestReportBtn" style="margin-top: 15px; width: auto; display: none;">
+                        <i class="fas fa-file-prescription"></i> فتح أحدث كشف طبي
+                    </button>
+                </div>
+            </div>
+
+            <!-- شبكة المحتوى -->
+            <div class="content-grid">
+                <!-- سجل الكشوفات الطبية -->
+                <div class="info-card">
+                    <div class="card-title">
+                        <i class="fas fa-notes-medical"></i> سجل الكشوفات الطبية
+                    </div>
+                    <ul class="report-list" id="reportsList">
+                        <!-- Loaded from DB -->
+                    </ul>
+                </div>
+
+                <!-- الأدوية الحالية -->
+                <div class="info-card">
+                    <div class="card-title">
+                        <i class="fas fa-pills"></i> الأدوية الموصوفة
+                    </div>
+                    <div id="medicationsList">
+                        <!-- Loaded from DB or static -->
+                    </div>
+                </div>
+
+                <!-- العلامات الحيوية -->
+                <div class="info-card">
+                    <div class="card-title">
+                        <i class="fas fa-chart-line"></i> العلامات الحيوية
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="vitalsChart"></canvas>
+                    </div>
+                    <div class="vital-stats">
+                        <div class="vital-item">
+                            <div class="vital-value" id="lastBP">120/80</div>
+                            <div class="vital-label">ضغط الدم</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-value" id="lastPulse">72</div>
+                            <div class="vital-label">معدل النبض</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-value" id="lastTemp">36.6°C</div>
+                            <div class="vital-label">الحرارة</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- المواعيد القادمة -->
+                <div class="info-card">
+                    <div class="card-title">
+                        <i class="fas fa-calendar-alt"></i> المواعيد القادمة
+                    </div>
+                    <ul class="report-list" id="upcomingAppointments">
+                        <li style="text-align: center; padding: 20px; color: var(--text-light);">لا توجد مواعيد قادمة مؤكدة</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال عرض تفاصيل السجل الطبي -->
+    <div id="recordModal" class="modal-overlay">
+        <div style="background: white; border-radius: 20px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow);">
+            <div style="padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: var(--primary); font-weight: 700;"><i class="fas fa-file-medical"></i> تفاصيل السجل الطبي</h3>
+                <button onclick="closeRecordModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);">&times;</button>
+            </div>
+            <div style="padding: 25px;" id="recordModalBody">
+                <!-- Content injected via JS -->
+            </div>
+            <div style="padding: 20px 25px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+                <button class="btn-primary" onclick="closeRecordModal()" style="width: auto; padding: 10px 30px;">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        body.dark-mode .modal-overlay > div {
+            background: var(--light);
+            color: var(--dark);
+        }
+        .detail-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        body.dark-mode .detail-row {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        .detail-row span {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+        .detail-row strong {
+            font-size: 16px;
+            color: var(--text);
+        }
+        .view-btn {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;            align-items: center;
+            gap: 5px;
+        }
+        .view-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+
+    <script src="core.js"></script>
+    <script>
+        const currentUser = IDOS.currentUser;
+        const db = IDOS.db;
+        let vitalsChart = null;
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!currentUser || currentUser.role !== "patient") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+            
+            await db.open();
+            updateUserInfo();
+            initVitalsChart();
+            await loadMedicalReports();
+            await loadUpcomingAppointments();
+            initDarkMode();
+        });
+
+        // تحديث معلومات المستخدم
+        function updateUserInfo() {
+            const nameEl = document.getElementById("userName");
+            const fullNameEl = document.getElementById("fullName");
+            if (nameEl && currentUser.name) {
+                nameEl.textContent = currentUser.name;
+                fullNameEl.textContent = currentUser.name;
+            }
+            
+            const avatarEl = document.getElementById("userAvatar");
+            if (avatarEl && currentUser.name) {
+                avatarEl.textContent = currentUser.name.charAt(0);
+            }
+            
+            // تحديث زمرة الدم من قاعدة البيانات
+            loadUserMedicalInfo();
+        }
+
+        async function loadUserMedicalInfo() {
+            if (!currentUser.id) return;
+            
+            try {
+                const user = await db.users.get(currentUser.id);
+                if (user && user.bloodType) {
+                    document.getElementById("bloodType").textContent = `زمرة الدم: ${user.bloodType}`;
+                }
+            } catch (error) {
+                console.error("Error loading medical info:", error);
+            }
+        }
+
+        // إنشاء مخطط العلامات الحيوية
+        function initVitalsChart() {
+            const ctx = document.getElementById("vitalsChart").getContext("2d");
+            
+            if (vitalsChart) vitalsChart.destroy();
+            
+            vitalsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4', 'الأسبوع 5'],
+                    datasets: [
+                        {
+                            label: 'ضغط الدم الانقباضي',
+                            data: [118, 120, 122, 119, 120],
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'معدل النبض',
+                            data: [75, 73, 72, 74, 72],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // تحميل التقارير الطبية
+        async function loadMedicalReports() {
+            try {
+                const reports = await db.medicalRecords
+                    .where("patientId")
+                    .equals(currentUser.id)
+                    .toArray();
+                
+                const reportsList = document.getElementById("reportsList");
+                const openLatestBtn = document.getElementById("openLatestReportBtn");
+
+                if (reports.length > 0) {
+                    reportsList.innerHTML = "";
+                    reports.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    // إظهار زر أحدث كشف في الملف الشخصي
+                    const latestReport = reports[0];
+                    openLatestBtn.style.display = "flex";
+                    openLatestBtn.onclick = () => viewRecordDetails(latestReport);
+
+                    if (latestReport.vitals) {
+                        if (latestReport.vitals.bp) document.getElementById("lastBP").textContent = latestReport.vitals.bp;
+                        if (latestReport.vitals.pulse) document.getElementById("lastPulse").textContent = latestReport.vitals.pulse;
+                        if (latestReport.vitals.temp) document.getElementById("lastTemp").textContent = latestReport.vitals.temp + "°C";
+                    }
+
+                    reports.forEach(report => {
+                        const li = document.createElement("li");
+                        li.className = "report-item";
+                        li.innerHTML = `
+                            <div style="width: 40px; height: 40px; background: rgba(37, 99, 235, 0.1); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                <i class="fas fa-file-prescription"></i>
+                            </div>
+                            <div class="report-info" style="flex: 1; margin-right: 15px;">
+                                <h4 style="margin-bottom: 5px;">كشف: ${report.title}</h4>
+                                <div class="report-date" style="font-size: 12px; color: var(--text-light);">
+                                    <i class="fas fa-calendar-alt"></i> ${report.date} | <i class="fas fa-user-md"></i> د. ${report.doctorName}
+                                </div>
+                            </div>
+                            <button class="view-btn" onclick='viewRecordDetails(${JSON.stringify(report).replace(/'/g, "&apos;")})'>
+                                <i class="fas fa-eye"></i> عرض الكشف
+                            </button>
+                        `;
+                        reportsList.appendChild(li);
+                    });
+                } else {
+                    reportsList.innerHTML = `<li style="text-align: center; padding: 20px; color: var(--text-light);">لا توجد تقارير طبية مسجلة</li>`;
+                }
+            } catch (error) {
+                console.error("Error loading reports:", error);
+            }
+        }
+
+        // عرض تفاصيل التقرير
+        window.viewRecordDetails = function(record) {
+            const body = document.getElementById("recordModalBody");
+            body.innerHTML = `
+                <div style="background: #f8fafc; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px;">
+                        <span style="font-weight: 700; color: var(--primary);">رقم الكشف: #RE-${record.id || 'N/A'}</span>
+                        <span style="color: var(--text-light); font-size: 13px;"><i class="fas fa-calendar-alt"></i> ${record.date}</span>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-size: 13px; color: var(--text-light); margin-bottom: 5px;">نوع الكشف / العنوان</div>
+                        <div style="font-weight: 800; font-size: 18px; color: var(--dark);">${record.title}</div>
+                    </div>
+                    <div style="display: flex; gap: 20px;">
+                        <div>
+                            <div style="font-size: 12px; color: var(--text-light);">الطبيب المعالج</div>
+                            <div style="font-weight: 700; color: var(--primary);">د. ${record.doctorName}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <span><i class="fas fa-stethoscope"></i> التشخيص الطبي</span>
+                    <strong style="color: var(--primary); background: rgba(37, 99, 235, 0.05); padding: 10px; border-radius: 10px; display: block; margin-top: 5px; border-right: 4px solid var(--primary);">${record.diagnosis}</strong>
+                </div>
+
+                ${record.vitals ? `
+                    <div class="detail-row">
+                        <span><i class="fas fa-heartbeat"></i> العلامات الحيوية أثناء الكشف</span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 5px;">
+                            <div style="background: #fff5f5; padding: 10px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 11px; color: #e53e3e;">الضغط</div>
+                                <div style="font-weight: 800; color: #c53030;">${record.vitals.bp || "-"}</div>
+                            </div>
+                            <div style="background: #f0fff4; padding: 10px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 11px; color: #38a169;">النبض</div>
+                                <div style="font-weight: 800; color: #2f855a;">${record.vitals.pulse || "-"}</div>
+                            </div>
+                            <div style="background: #fffaf0; padding: 10px; border-radius: 10px; text-align: center;">
+                                <div style="font-size: 11px; color: #dd6b20;">الحرارة</div>
+                                <div style="font-weight: 800; color: #c05621;">${record.vitals.temp || "-"}°C</div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="detail-row">
+                    <span><i class="fas fa-pills"></i> الخطة العلاجية</span>
+                    <strong style="color: var(--success); background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 10px; display: block; margin-top: 5px; border-right: 4px solid var(--success);">${record.treatment || "لم يتم وصف علاج محدد بعد"}</strong>
+                </div>
+
+                <div class="detail-row">
+                    <span><i class="fas fa-comment-medical"></i> ملاحظات الطبيب</span>
+                    <div style="color: var(--text); font-size: 14px; padding: 10px; background: #f8fafc; border-radius: 10px; margin-top: 5px;">${record.notes || "لا توجد ملاحظات إضافية"}</div>
+                </div>
+
+                <div style="margin-top: 25px; text-align: center; font-size: 11px; color: var(--text-light); border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                    <i class="fas fa-shield-alt"></i> هذا التقرير تم إنشاؤه إلكترونياً عبر نظام IDOS Hospital وهو معتمد طبياً.
+                </div>
+            `;
+            document.getElementById("recordModal").classList.add("active");
+        }
+
+        window.closeRecordModal = function() {
+            document.getElementById("recordModal").classList.remove("active");
+        }
+
+        // تحميل المواعيد القادمة
+        async function loadUpcomingAppointments() {
+            try {
+                const appointments = await db.appointments
+                    .where("patientId")
+                    .equals(currentUser.id)
+                    .and(apt => apt.status === "confirmed" && new Date(apt.date) >= new Date())
+                    .toArray();
+                
+                if (appointments.length > 0) {
+                    const container = document.getElementById("upcomingAppointments");
+                    container.innerHTML = "";
+                    appointments.forEach(apt => {
+                        const li = document.createElement("li");
+                        li.className = "report-item";
+                        li.innerHTML = `
+                            <div class="report-info">
+                                <h4>${apt.doctorName}</h4>
+                                <div class="report-date">${apt.date} - ${apt.time}</div>
+                            </div>
+                            <button class="download-btn" style="background: rgba(239,68,68,0.1); color: #ef4444;" onclick="cancelAppointment(${apt.id})">
+                                <i class="fas fa-times"></i> إلغاء
+                            </button>
+                        `;
+                        container.appendChild(li);
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading appointments:", error);
+            }
+        }
+
+        // تنزيل تقرير
+        window.downloadReport = function(id) {
+            alert(`جاري تحميل التقرير رقم ${id}`);
+        }
+
+        window.downloadReportFile = function(id) {
+            alert(`جاري تحميل التقرير الطبي`);
+        }
+
+        // إلغاء موعد
+        window.cancelAppointment = async function(id) {
+            if (confirm("هل أنت متأكد من إلغاء هذا الموعد؟")) {
+                try {
+                    await db.appointments.update(id, { status: "cancelled" });
+                    alert("تم إلغاء الموعد بنجاح");
+                    loadUpcomingAppointments();
+                } catch (error) {
+                    console.error("Error cancelling appointment:", error);
+                }
+            }
+        }
+
+        // تبديل الوضع الداكن
+        function initDarkMode() {
+            const toggle = document.getElementById("darkModeToggle");
+            toggle.addEventListener("click", () => {
+                darkMode = !darkMode;
+                localStorage.setItem("darkMode", darkMode);
+                document.body.classList.toggle("dark-mode", darkMode);
+                toggle.innerHTML = darkMode ? '<i class="fas fa-sun"></i><span>الوضع الفاتح</span>' : '<i class="fas fa-moon"></i><span>الوضع الداكن</span>';
+            });
+        }
+
+        // تسجيل الخروج
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            IDOS.logout();
+        });
+    </script>
+</body>
+</html>

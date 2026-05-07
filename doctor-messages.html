@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرسائل - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        body.rtl {
+            direction: rtl;
+        }
+
+        body.ltr {
+            direction: ltr;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar {
+            right: 0;
+        }
+
+        body.ltr .sidebar {
+            left: 0;
+        }
+
+        body.rtl .main-content {
+            margin-right: var(--sidebar-width);
+        }
+
+        body.ltr .main-content {
+            margin-left: var(--sidebar-width);
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.rtl .menu-item a:hover {
+            transform: translateX(-5px);
+        }
+
+        body.ltr .menu-item a:hover {
+            transform: translateX(5px);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+        }
+
+        body.rtl .menu-item i {
+            margin-left: 12px;
+        }
+
+        body.ltr .menu-item i {
+            margin-right: 12px;
+        }
+
+        .menu-item span {
+            flex: 1;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .header {
+            background: var(--light);
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .dark-mode-toggle,
+        .logout-btn,
+        .back-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .back-btn {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+        }
+
+        .back-btn:hover {
+            background: rgba(6, 182, 212, 0.2);
+        }
+
+        /* واجهة المحادثة */
+        .chat-container {
+            display: flex;
+            gap: 0;
+            height: calc(100vh - 140px);
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .chat-container {
+            background: var(--light);
+        }
+
+        /* قائمة جهات الاتصال (المرضى) */
+        .contacts-panel {
+            width: 320px;
+            background: #f8fafc;
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .contacts-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border-left-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.ltr .contacts-panel {
+            border-left: none;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .contacts-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .contacts-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .contacts-search {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .contacts-search input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+        }
+
+        body.dark-mode .contacts-search input {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--dark);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        body.dark-mode .contact-item {
+            border-bottom-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .contact-item:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .contact-item.active {
+            background: rgba(37, 99, 235, 0.1);
+            border-right: 3px solid var(--primary);
+        }
+
+        body.ltr .contact-item.active {
+            border-right: none;
+            border-left: 3px solid var(--primary);
+        }
+
+        .contact-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .contact-name {
+            font-weight: 700;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .contact-last-message {
+            font-size: 12px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-badge {
+            background: var(--danger);
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* منطقة المحادثة */
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        body.dark-mode .chat-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-header-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .chat-header-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header-info p {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* رسائل المحادثة */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        body.dark-mode .chat-messages {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-sent {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-received {
+            align-self: flex-start;
+            background: white;
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .message-received {
+            background: #1e293b;
+            color: var(--dark);
+        }
+
+        .message-time {
+            font-size: 10px;
+            margin-top: 5px;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .message-sent .message-time {
+            justify-content: flex-end;
+        }
+
+        /* منطقة إدخال النص */
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 12px;
+            background: inherit;
+        }
+
+        body.dark-mode .chat-input-area {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: var(--transition);
+            background: #f8fafc;
+        }
+
+        body.dark-mode .chat-input {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--dark);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* رسالة عدم وجود محادثة */
+        .no-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        .no-chat i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar-header .logo-text,
+            .user-info,
+            .menu-item span {
+                display: none;
+            }
+
+            body.rtl .main-content {
+                margin-right: 80px;
+            }
+
+            body.ltr .main-content {
+                margin-left: 80px;
+            }
+
+            .menu-item a {
+                justify-content: center;
+                padding: 12px;
+            }
+
+            .menu-item i {
+                margin: 0;
+            }
+
+            .contacts-panel {
+                width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .header-actions {
+                justify-content: center;
+            }
+
+            .contacts-panel {
+                width: 260px;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 15px;
+            }
+
+            .sidebar {
+                width: 70px;
+            }
+
+            body.rtl .main-content {
+                margin-right: 70px;
+            }
+
+            body.ltr .main-content {
+                margin-left: 70px;
+            }
+
+            .contacts-panel {
+                width: 220px;
+            }
+
+            .contact-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body class="rtl">
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo.png" alt="IDOS Hospital" />
+                </div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">د. أحمد علي</div>
+                    <div class="user-type">طبيب - أمراض القلب</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="doctor-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item"><a href="doctor-patients.html"><i class="fas fa-users"></i><span>مرضاي</span></a></li>
+                <li class="menu-item"><a href="doctor-appointments.html"><i class="fas fa-calendar-alt"></i><span>المواعيد</span></a></li>
+                <li class="menu-item"><a href="doctor-medical-records.html"><i class="fas fa-file-medical"></i><span>السجلات الطبية</span></a></li>
+                <li class="menu-item active"><a href="doctor-messages.html"><i class="fas fa-comments"></i><span>الرسائل</span></a></li>
+                <li class="menu-item"><a href="doctor-reports.html"><i class="fas fa-chart-line"></i><span>التقارير</span></a></li>
+                <li class="menu-item"><a href="doctor-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1><i class="fas fa-comments"></i> التواصل مع المرضى</h1>
+                <div class="header-actions">
+                    <button class="back-btn" onclick="window.location.href='doctor-dashboard.html'">
+                        <i class="fas fa-arrow-right"></i> العودة
+                    </button>
+                    <button class="dark-mode-toggle" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>الوضع الداكن</span>
+                    </button>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>تسجيل الخروج</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <!-- قائمة جهات الاتصال (المرضى) -->
+                <div class="contacts-panel">
+                    <div class="contacts-header">
+                        <span><i class="fas fa-users"></i> مرضاي</span>
+                        <span id="unreadCount"
+                            style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 20px; font-size: 12px;">0</span>
+                    </div>
+                    <div class="contacts-search">
+                        <input type="text" id="searchContacts" placeholder="بحث عن مريض...">
+                    </div>
+                    <div class="contacts-list" id="contactsList">
+                        <div style="padding: 20px; text-align: center;">جاري التحميل...</div>
+                    </div>
+                </div>
+
+                <!-- منطقة المحادثة -->
+                <div class="chat-panel" id="chatPanel">
+                    <div class="no-chat" id="noChatPlaceholder">
+                        <i class="fas fa-comment-dots"></i>
+                        <h3>مرحباً بك في نظام التواصل</h3>
+                        <p>اختر مريضاً لبدء المحادثة</p>
+                    </div>
+                    <div id="chatContent" style="display: none; flex-direction: column; height: 100%;">
+                        <div class="chat-header" id="chatHeader"></div>
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="messageInput" placeholder="اكتب رسالتك هنا...">
+                            <button class="send-btn" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="core.js"></script>
+    <script>
+        const currentUser = IDOS.currentUser;
+        const currentLanguage = IDOS.currentLanguage;
+        let activePatient = null;
+        let allMessages = [];
+        let patientsList = [];
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!currentUser || currentUser.role !== "doctor") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+            
+            updateDoctorName();
+            await loadPatients();
+            initDarkMode();
+            
+            // تحديث تلقائي للرسائل كل 5 ثوانٍ
+            setInterval(() => {
+                if (activePatient) loadMessages(activePatient.id);
+                updateUnreadMap();
+            }, 5000);
+        });
+
+        function updateDoctorName() {
+            const nameEl = document.getElementById("userName");
+            const deptEl = document.querySelector(".user-type");
+            if (nameEl && currentUser.name) {
+                nameEl.textContent = currentUser.name;
+            }
+            if (deptEl && currentUser.department) {
+                deptEl.textContent = `طبيب - ${currentUser.department}`;
+            }
+        }
+
+        // تحميل قائمة المرضى
+        async function loadPatients() {
+            try {
+                const allPatients = await IDOS.db.users.where("role").equals("patient").toArray();
+                patientsList = allPatients;
+
+                const unreadMap = await getUnreadMap();
+                renderPatientsList(patientsList, unreadMap);
+                
+                const totalUnread = await IDOS.db.messages.where("receiverId").equals(currentUser.id).filter(m => !m.isRead).count();
+                document.getElementById("unreadCount").textContent = totalUnread;
+
+            } catch (error) {
+                console.error("Error loading patients:", error);
+            }
+        }
+
+        async function updateUnreadMap() {
+            const unreadMap = await getUnreadMap();
+            renderPatientsList(patientsList, unreadMap);
+            const totalUnread = await IDOS.db.messages.where("receiverId").equals(currentUser.id).filter(m => !m.isRead).count();
+            document.getElementById("unreadCount").textContent = totalUnread;
+        }
+
+        function renderPatientsList(patients, unreadMap) {
+            const container = document.getElementById("contactsList");
+            const searchTerm = document.getElementById("searchContacts").value.toLowerCase();
+
+            let filtered = patients;
+            if (searchTerm) {
+                filtered = patients.filter(p => p.name.toLowerCase().includes(searchTerm));
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-light);">${currentLanguage === 'ar' ? 'لا يوجد مرضى مطابقين' : 'No matching patients'}</div>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            filtered.forEach(patient => {
+                const unread = unreadMap.get(patient.id) || 0;
+                const avatarColor = getAvatarColor(patient.id);
+
+                const contactDiv = document.createElement("div");
+                contactDiv.className = `contact-item ${activePatient?.id === patient.id ? 'active' : ''}`;
+                contactDiv.onclick = () => selectPatient(patient);
+                contactDiv.innerHTML = `
+                    <div class="contact-avatar" style="background: ${avatarColor};">
+                        ${patient.avatar && patient.avatar.length === 1 ? patient.avatar : (patient.name.charAt(0))}
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-name">
+                            <span>${patient.name}</span>
+                            ${unread > 0 ? `<span class="contact-badge">${unread}</span>` : ''}
+                        </div>
+                        <div class="contact-last-message">
+                            <i class="fas fa-envelope"></i> ${patient.email}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(contactDiv);
+            });
+        }
+
+        function getAvatarColor(id) {
+            const colors = ['#2563eb', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+            return colors[id % colors.length];
+        }
+
+        // اختيار مريض
+        async function selectPatient(patient) {
+            activePatient = patient;
+
+            document.getElementById("noChatPlaceholder").style.display = "none";
+            document.getElementById("chatContent").style.display = "flex";
+
+            const avatarColor = getAvatarColor(patient.id);
+            document.getElementById("chatHeader").innerHTML = `
+                <div class="chat-header-avatar" style="background: ${avatarColor};">
+                    ${patient.avatar && patient.avatar.length === 1 ? patient.avatar : (patient.name.charAt(0))}
+                </div>
+                <div class="chat-header-info">
+                    <h3>${patient.name}</h3>
+                    <p><i class="fas fa-envelope"></i> ${patient.email}</p>
+                </div>
+            `;
+
+            await loadMessages(patient.id);
+            updateUnreadMap();
+        }
+
+        async function getUnreadMap() {
+            const unreadMap = new Map();
+            const allMsgs = await IDOS.db.messages.where("receiverId").equals(currentUser.id).toArray();
+            allMsgs.forEach(msg => {
+                if (!msg.isRead) {
+                    unreadMap.set(msg.senderId, (unreadMap.get(msg.senderId) || 0) + 1);
+                }
+            });
+            return unreadMap;
+        }
+
+        // تحميل الرسائل
+        async function loadMessages(patientId) {
+            try {
+                const messages = await IDOS.db.messages
+                    .filter(msg =>
+                        (msg.senderId === currentUser.id && msg.receiverId === patientId) ||
+                        (msg.senderId === patientId && msg.receiverId === currentUser.id)
+                    )
+                    .toArray();
+
+                messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                
+                if (JSON.stringify(messages) !== JSON.stringify(allMessages)) {
+                    allMessages = messages;
+                    renderMessages();
+                }
+
+                // تحديث حالة القراءة للرسائل الواردة
+                const unreadMessages = messages.filter(m => m.senderId === patientId && !m.isRead);
+                if (unreadMessages.length > 0) {
+                    for (const msg of unreadMessages) {
+                        await IDOS.db.messages.update(msg.id, { isRead: true });
+                    }
+                    updateUnreadMap();
+                }
+
+            } catch (error) {
+                console.error("Error loading messages:", error);
+            }
+        }
+
+        function renderMessages() {
+            const container = document.getElementById("chatMessages");
+
+            if (allMessages.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light);">${currentLanguage === 'ar' ? 'لا توجد رسائل بعد، ابدأ المحادثة' : 'No messages yet, start a conversation'}</div>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            allMessages.forEach(msg => {
+                const isSent = msg.senderId === currentUser.id;
+                const messageDiv = document.createElement("div");
+                messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
+
+                const time = new Date(msg.timestamp).toLocaleTimeString(currentLanguage === 'ar' ? "ar-SA" : "en-US", { hour: '2-digit', minute: '2-digit' });
+                const date = new Date(msg.timestamp).toLocaleDateString(currentLanguage === 'ar' ? "ar-SA" : "en-US");
+
+                messageDiv.innerHTML = `
+                    <div>${escapeHtml(msg.content)}</div>
+                    <div class="message-time">
+                        <i class="fas ${isSent ? 'fa-check-double' : 'fa-clock'}"></i> ${time} - ${date}
+                    </div>
+                `;
+                container.appendChild(messageDiv);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // إرسال رسالة
+        async function sendMessage() {
+            const content = document.getElementById("messageInput").value.trim();
+            if (!content || !activePatient) return;
+
+            const newMessage = {
+                senderId: currentUser.id,
+                senderName: currentUser.name,
+                senderRole: "doctor",
+                receiverId: activePatient.id,
+                receiverName: activePatient.name,
+                receiverRole: "patient",
+                content: content,
+                timestamp: new Date().toISOString(),
+                isRead: false
+            };
+
+            try {
+                await IDOS.db.messages.add(newMessage);
+                document.getElementById("messageInput").value = "";
+                await loadMessages(activePatient.id);
+            } catch (error) {
+                console.error("Error sending message:", error);
+                IDOS.showToast("error", currentLanguage === 'ar' ? "خطأ في إرسال الرسالة" : "Error sending message");
+            }
+        }
+
+        function initDarkMode() {
+            const toggle = document.getElementById("darkModeToggle");
+            const isDark = localStorage.getItem("darkMode") === "true";
+            if (isDark) document.body.classList.add("dark-mode");
+            
+            toggle.addEventListener("click", () => {
+                const darkMode = document.body.classList.toggle("dark-mode");
+                localStorage.setItem("darkMode", darkMode);
+                toggle.innerHTML = darkMode ? '<i class="fas fa-sun"></i><span>الوضع الفاتح</span>' : '<i class="fas fa-moon"></i><span>الوضع الداكن</span>';
+            });
+        }
+
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        });
+
+        document.getElementById("searchContacts").addEventListener("input", () => {
+            getUnreadMap().then(unreadMap => renderPatientsList(patientsList, unreadMap));
+        });
+
+        document.getElementById("messageInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    </script>
+</body>
+
+</html>

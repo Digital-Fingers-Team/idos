@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المستخدمين - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="core.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar { right: 0; }
+        body.ltr .sidebar { left: 0; }
+        body.rtl .main-content { margin-right: var(--sidebar-width); }
+        body.ltr .main-content { margin-left: var(--sidebar-width); }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+            margin-left: 12px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .header { background: var(--light); }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .users-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+
+        body.dark-mode .users-container { background: var(--light); }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+
+        .users-table th, .users-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-active { background: #d1fae5; color: #059669; }
+        .status-inactive { background: #fee2e2; color: #dc2626; }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        body.dark-mode .modal { background: var(--light); }
+
+        .modal-header { margin-bottom: 20px; font-size: 20px; font-weight: bold; color: var(--primary); }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label { font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group select {
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><img src="logo.png" alt="IDOS"></div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">المدير</div>
+                    <div class="user-type">إدارة النظام</div>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="admin-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item active"><a href="admin-users.html"><i class="fas fa-users"></i><span>إدارة المستخدمين</span></a></li>
+                <li class="menu-item"><a href="admin-hospital-3d.html"><i class="fas fa-cube"></i><span>عرض المستشفى 3D</span></a></li>
+                <li class="menu-item"><a href="admin-schedule.html"><i class="fas fa-calendar-alt"></i><span>إدارة المواعيد</span></a></li>
+                <li class="menu-item"><a href="admin-reports.html"><i class="fas fa-file-medical"></i><span>التقارير الطبية</span></a></li>
+                <li class="menu-item"><a href="admin-messages.html"><i class="fas fa-envelope"></i><span>الرسائل</span></a></li>
+                <li class="menu-item"><a href="admin-payments.html"><i class="fas fa-credit-card"></i><span>المدفوعات</span></a></li>
+                <li class="menu-item"><a href="admin-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>إدارة المستخدمين</h1>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="showAddModal()"><i class="fas fa-plus"></i> إضافة مستخدم</button>
+                    <button class="dark-mode-toggle" id="darkModeToggle"><i class="fas fa-moon"></i></button>
+                    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+
+            <div class="users-container">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الدور</th>
+                            <th>القسم / فصيلة الدم</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                        <!-- Loaded from DB -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header" id="modalTitle">إضافة مستخدم جديد</div>
+            <input type="hidden" id="userId">
+            <div class="form-group">
+                <label>الاسم الكامل</label>
+                <input type="text" id="editName" required>
+            </div>
+            <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="editEmail" required>
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="editPassword">
+            </div>
+            <div class="form-group">
+                <label>الدور</label>
+                <select id="editRole">
+                    <option value="patient">مريض</option>
+                    <option value="doctor">طبيب</option>
+                    <option value="admin">إداري</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>الحالة</label>
+                <select id="editStatus">
+                    <option value="active">نشط</option>
+                    <option value="inactive">غير نشط</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-primary" onclick="saveUser()">حفظ</button>
+                <button class="btn-primary" style="background:#94a3b8;" onclick="hideModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            const users = await IDOS.db.users.toArray();
+            const list = document.getElementById("usersList");
+            list.innerHTML = users.map(u => `
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:30px; height:30px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px;">
+                                ${u.avatar || u.name[0]}
+                            </div>
+                            ${u.name}
+                        </div>
+                    </td>
+                    <td>${u.email}</td>
+                    <td>${u.role === 'admin' ? 'إداري' : u.role === 'doctor' ? 'طبيب' : 'مريض'}</td>
+                    <td>${u.role === 'doctor' ? (u.department || 'عام') : (u.bloodType || 'غير محدد')}</td>
+                    <td><span class="status-badge status-${u.status}">${u.status === 'active' ? 'نشط' : 'غير نشط'}</span></td>
+                    <td>
+                        <button onclick="editUser(${u.id})" class="btn-primary" style="padding:5px 10px; font-size:12px; background:#3b82f6;"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteUser(${u.id})" class="btn-primary" style="padding:5px 10px; font-size:12px; background:#ef4444;"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showAddModal() {
+            document.getElementById("modalTitle").textContent = "إضافة مستخدم جديد";
+            document.getElementById("userId").value = "";
+            document.getElementById("editName").value = "";
+            document.getElementById("editEmail").value = "";
+            document.getElementById("editPassword").value = "";
+            document.getElementById("editRole").value = "patient";
+            document.getElementById("editStatus").value = "active";
+            document.getElementById("userModal").style.display = "flex";
+        }
+
+        async function editUser(id) {
+            const user = await IDOS.db.users.get(id);
+            document.getElementById("modalTitle").textContent = "تعديل مستخدم";
+            document.getElementById("userId").value = user.id;
+            document.getElementById("editName").value = user.name;
+            document.getElementById("editEmail").value = user.email;
+            document.getElementById("editPassword").value = user.password;
+            document.getElementById("editRole").value = user.role;
+            document.getElementById("editStatus").value = user.status;
+            document.getElementById("userModal").style.display = "flex";
+        }
+
+        function hideModal() {
+            document.getElementById("userModal").style.display = "none";
+        }
+
+        async function saveUser() {
+            const id = document.getElementById("userId").value;
+            const name = document.getElementById("editName").value;
+            const email = document.getElementById("editEmail").value;
+            const password = document.getElementById("editPassword").value;
+            const role = document.getElementById("editRole").value;
+            const status = document.getElementById("editStatus").value;
+
+            if (!name || !email || !password) {
+                IDOS.showToast("error", "يرجى ملء جميع الحقول");
+                return;
+            }
+
+            const data = {
+                name,
+                email,
+                password,
+                role,
+                status,
+                avatar: name[0].toUpperCase()
+            };
+
+            try {
+                if (id) {
+                    await IDOS.db.users.update(parseInt(id), data);
+                    IDOS.showToast("success", "تم تحديث بيانات المستخدم");
+                } else {
+                    // التحقق من عدم تكرار البريد
+                    const exists = await IDOS.db.users.where("email").equals(email).first();
+                    if (exists) {
+                        IDOS.showToast("error", "البريد الإلكتروني مسجل بالفعل");
+                        return;
+                    }
+                    await IDOS.db.users.add({
+                        ...data,
+                        registrationDate: new Date().toISOString()
+                    });
+                    IDOS.showToast("success", "تم إضافة المستخدم بنجاح");
+                }
+
+                hideModal();
+                loadUsers();
+            } catch (err) {
+                console.error(err);
+                IDOS.showToast("error", "حدث خطأ أثناء الحفظ");
+            }
+        }
+
+        async function deleteUser(id) {
+            if (confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
+                try {
+                    await IDOS.db.users.delete(id);
+                    loadUsers();
+                    IDOS.showToast("info", "تم حذف المستخدم");
+                } catch (err) {
+                    IDOS.showToast("error", "خطأ في الحذف");
+                }
+            }
+        }
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", () => {
+            const currentUser = IDOS.currentUser;
+            if (!currentUser || currentUser.role !== 'admin') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+
+            loadUsers();
+        });
+    </script>
+</body>
+</html>

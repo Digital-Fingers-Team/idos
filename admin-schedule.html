@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المواعيد - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="core.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+            color: var(--text);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar { right: 0; }
+        body.ltr .sidebar { left: 0; }
+        body.rtl .main-content { margin-right: var(--sidebar-width); }
+        body.ltr .main-content { margin-left: var(--sidebar-width); }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo img {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 25px;
+            margin-left: 12px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 25px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .header { background: var(--light); }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Controls */
+        .controls-bar {
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .controls-bar { background: var(--light); }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .filter-group input, .filter-group select {
+            padding: 12px 18px;
+            border: 2px solid #f1f5f9;
+            border-radius: 14px;
+            outline: none;
+            background: #f8fafc;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .filter-group input, 
+        body.dark-mode .filter-group select {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .filter-group input:focus, .filter-group select:focus {
+            border-color: var(--primary);
+            background: white;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .dark-mode-toggle, .logout-btn {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 18px;
+        }
+
+        .dark-mode-toggle {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background: rgba(255,255,255,0.1);
+            color: var(--warning);
+        }
+
+        .logout-btn {
+            background: #fef2f2;
+            color: var(--danger);
+        }
+
+        /* Schedule Container */
+        .schedule-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            overflow-x: auto;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .schedule-container { background: var(--light); }
+
+        .appointments-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            text-align: right;
+        }
+
+        .appointments-table th {
+            padding: 15px 20px;
+            color: var(--text-light);
+            font-weight: 700;
+            font-size: 14px;
+            border: none;
+        }
+
+        .appointments-table tbody tr {
+            background: #f8fafc;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .appointments-table tbody tr {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .appointments-table tbody tr:hover {
+            transform: scale(1.01);
+            background: #f1f5f9;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .appointments-table td {
+            padding: 20px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .appointments-table td:first-child {
+            border-radius: 0 16px 16px 0;
+        }
+
+        .appointments-table td:last-child {
+            border-radius: 16px 0 0 16px;
+        }
+
+        /* Badges */
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-pending { background: #fffbeb; color: #d97706; }
+        .status-pending::before { background: #f59e0b; }
+
+        .status-confirmed { background: #ecfdf5; color: #059669; }
+        .status-confirmed::before { background: #10b981; }
+
+        .status-cancelled { background: #fef2f2; color: #dc2626; }
+        .status-cancelled::before { background: #ef4444; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal {
+            background: white;
+            padding: 40px;
+            border-radius: 28px;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalFade 0.3s ease;
+        }
+
+        @keyframes modalFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body.dark-mode .modal { background: var(--light); }
+
+        .modal-header {
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 15px;
+            margin-top: 35px;
+        }
+
+        .action-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin: 0 4px;
+        }
+
+        .btn-confirm { background: #d1fae5; color: #059669; }
+        .btn-confirm:hover { background: #10b981; color: white; }
+        
+        .btn-delete { background: #fee2e2; color: #dc2626; }
+        .btn-delete:hover { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><img src="logo.png" alt="IDOS"></div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">المدير</div>
+                    <div class="user-type">إدارة النظام</div>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="admin-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item"><a href="admin-users.html"><i class="fas fa-users"></i><span>إدارة المستخدمين</span></a></li>
+                <li class="menu-item"><a href="admin-hospital-3d.html"><i class="fas fa-cube"></i><span>عرض المستشفى 3D</span></a></li>
+                <li class="menu-item active"><a href="admin-schedule.html"><i class="fas fa-calendar-alt"></i><span>إدارة المواعيد</span></a></li>
+                <li class="menu-item"><a href="admin-reports.html"><i class="fas fa-file-medical"></i><span>التقارير الطبية</span></a></li>
+                <li class="menu-item"><a href="admin-messages.html"><i class="fas fa-envelope"></i><span>الرسائل</span></a></li>
+                <li class="menu-item"><a href="admin-payments.html"><i class="fas fa-credit-card"></i><span>المدفوعات</span></a></li>
+                <li class="menu-item"><a href="admin-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>إدارة المواعيد</h1>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="showAddModal()"><i class="fas fa-plus"></i> إضافة موعد</button>
+                    <button class="dark-mode-toggle" id="darkModeToggle"><i class="fas fa-moon"></i></button>
+                    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+
+            <div class="controls-bar">
+                <div class="filter-group">
+                    <label>تصفية بالحالة</label>
+                    <select id="statusFilter" onchange="loadAppointments()">
+                        <option value="all">الكل</option>
+                        <option value="pending">معلق</option>
+                        <option value="confirmed">مؤكد</option>
+                        <option value="cancelled">ملغي</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="schedule-container">
+                <table class="appointments-table">
+                    <thead>
+                        <tr>
+                            <th>المريض</th>
+                            <th>الطبيب</th>
+                            <th>التخصص</th>
+                            <th>التاريخ</th>
+                            <th>الوقت</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsList">
+                        <!-- Loaded from DB -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Appointment Modal -->
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <i class="fas fa-calendar-plus"></i>
+                إضافة موعد جديد
+            </div>
+            <div class="filter-group" style="margin-bottom:20px;">
+                <label>المريض</label>
+                <select id="patientSelect"></select>
+            </div>
+            <div class="filter-group" style="margin-bottom:20px;">
+                <label>الطبيب</label>
+                <select id="doctorSelect"></select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="filter-group">
+                    <label>التاريخ</label>
+                    <input type="date" id="aptDate">
+                </div>
+                <div class="filter-group">
+                    <label>الوقت</label>
+                    <input type="time" id="aptTime">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="saveAppointment()" style="flex: 2;">
+                    <i class="fas fa-save"></i> حفظ الموعد
+                </button>
+                <button class="btn-primary" style="background:#94a3b8; flex: 1; box-shadow: none;" onclick="hideAddModal()">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadAppointments() {
+            const status = document.getElementById("statusFilter").value;
+            let query = IDOS.db.appointments.reverse();
+            if (status !== 'all') {
+                query = IDOS.db.appointments.where("status").equals(status);
+            }
+            
+            const appointments = await query.toArray();
+            const list = document.getElementById("appointmentsList");
+            list.innerHTML = appointments.map(a => `
+                <tr>
+                    <td>${a.patientName}</td>
+                    <td>${a.doctorName}</td>
+                    <td>${a.specialty}</td>
+                    <td>${a.date}</td>
+                    <td>${a.time}</td>
+                    <td><span class="status-badge status-${a.status}">${a.status === 'pending' ? 'معلق' : a.status === 'confirmed' ? 'مؤكد' : a.status === 'completed' ? 'مكتمل' : 'ملغي'}</span></td>
+                    <td>
+                        <div style="display: flex; gap: 5px;">
+                            ${a.status === 'pending' ? `<button onclick="updateStatus(${a.id}, 'confirmed')" class="action-btn btn-confirm" title="تأكيد"><i class="fas fa-check"></i></button>` : ''}
+                            <button onclick="deleteApt(${a.id})" class="action-btn btn-delete" title="حذف"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function showAddModal() {
+            const patients = await IDOS.db.users.where("role").equals("patient").toArray();
+            const doctors = await IDOS.db.users.where("role").equals("doctor").toArray();
+            
+            document.getElementById("patientSelect").innerHTML = patients.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            document.getElementById("doctorSelect").innerHTML = doctors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            
+            document.getElementById("addModal").style.display = "flex";
+        }
+
+        function hideAddModal() {
+            document.getElementById("addModal").style.display = "none";
+        }
+
+        async function saveAppointment() {
+            const patientId = parseInt(document.getElementById("patientSelect").value);
+            const doctorId = parseInt(document.getElementById("doctorSelect").value);
+            const date = document.getElementById("aptDate").value;
+            const time = document.getElementById("aptTime").value;
+
+            if (!patientId || !doctorId || !date || !time) {
+                IDOS.showToast("error", "يرجى ملء جميع الحقول");
+                return;
+            }
+
+            const patient = await IDOS.db.users.get(patientId);
+            const doctor = await IDOS.db.users.get(doctorId);
+
+            await IDOS.db.appointments.add({
+                patientId,
+                patientName: patient.name,
+                doctorId,
+                doctorName: doctor.name,
+                specialty: doctor.department || "عام",
+                date,
+                time,
+                status: "pending",
+                createdAt: new Date().toISOString()
+            });
+
+            hideAddModal();
+            loadAppointments();
+            IDOS.showToast("success", "تم إضافة الموعد بنجاح");
+        }
+
+        async function updateStatus(id, status) {
+            await IDOS.db.appointments.update(id, { status });
+            loadAppointments();
+            IDOS.showToast("success", "تم تحديث الحالة بنجاح");
+        }
+
+        async function deleteApt(id) {
+            if (confirm("هل أنت متأكد من حذف هذا الموعد؟")) {
+                await IDOS.db.appointments.delete(id);
+                loadAppointments();
+                IDOS.showToast("info", "تم حذف الموعد");
+            }
+        }
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", () => {
+            const currentUser = IDOS.currentUser;
+            if (!currentUser || currentUser.role !== 'admin') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+
+            loadAppointments();
+        });
+    </script>
+</body>
+</html>

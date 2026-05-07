@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقارير والإحصائيات - IDOS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <style>
+        :root { 
+            --primary: #4a6cf7;
+            --primary-dark: #3a56d4;
+            --secondary: #6c5ce7;
+            --accent: #a29bfe;
+            --light: #f8f9fa;
+            --dark: #2d3436;
+            --text: #333;
+            --text-light: #666;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+        
+        .dark-mode {
+            --light: #1a1a2e;
+            --dark: #f8f9fa;
+            --text: #e6e6e6;
+            --text-light: #b0b0b0;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e1f0fa 100%);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+        
+        body.dark-mode {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+        }
+        
+        body.rtl {
+            direction: rtl;
+        }
+        
+        body.ltr {
+            direction: ltr;
+        }
+        
+        /* التصميم الرئيسي */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* الشريط الجانبي - إصلاح مشكلة تغيير اللغة */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            /* إصلاح: بقاء القائمة في مكانها بغض النظر عن اللغة */
+            right: 0;
+        }
+        
+        body.ltr .sidebar {
+            right: auto;
+            left: 0;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+       .logo {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .logo img {
+        width: 140px;
+        height: auto;
+        object-fit: contain;
+        display: block;
+      }
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #e1f0fa);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+        
+        .menu-item {
+            margin-bottom: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .menu-item a:hover, .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+        
+        body.ltr .menu-item a:hover, 
+        body.ltr .menu-item.active a {
+            transform: translateX(-5px);
+        }
+        
+        .menu-item i {
+            margin-left: 10px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        body.ltr .menu-item i {
+            margin-left: 0;
+            margin-right: 10px;
+        }
+        
+        .menu-item span {
+            flex: 1;
+        }
+        
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: auto;
+        }
+        
+        .sidebar-footer .menu-item a {
+            padding: 10px 15px;
+        }
+        
+        /* المحتوى الرئيسي - إصلاح مشكلة التداخل */
+        .main-content {
+            flex: 1;
+            margin-right: var(--sidebar-width);
+            padding: 20px;
+            transition: var(--transition);
+        }
+        
+        body.ltr .main-content {
+            margin-right: 0;
+            margin-left: var(--sidebar-width);
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        body.dark-mode .header {
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        .header h1 {
+            color: var(--primary);
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .dark-mode-toggle, .back-btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dark-mode-toggle {
+            background: rgba(74, 108, 247, 0.1);
+            color: var(--primary);
+        }
+        
+        .dark-mode-toggle:hover {
+            background: rgba(74, 108, 247, 0.2);
+        }
+        
+        .back-btn {
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--secondary);
+        }
+        
+        .back-btn:hover {
+            background: rgba(108, 92, 231, 0.2);
+        }
+        
+        /* محتوى التقارير والإحصائيات */
+        .reports-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        /* بطاقات الإحصائيات */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        body.dark-mode .stat-card {
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 20px;
+            font-size: 28px;
+        }
+        
+        body.ltr .stat-icon {
+            margin-left: 0;
+            margin-right: 20px;
+        }
+        
+        .stat-icon.students {
+            background: rgba(74, 108, 247, 0.15);
+            color: var(--primary);
+        }
+        
+        .stat-icon.teachers {
+            background: rgba(108, 92, 231, 0.15);
+            color: var(--secondary);
+        }
+        
+        .stat-icon.classes {
+            background: rgba(0, 184, 148, 0.15);
+            color: var(--accent);
+        }
+        
+        .stat-icon.attendance {
+            background: rgba(253, 126, 20, 0.15);
+            color: #fd7e14;
+        }
+        
+        .stat-info {
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-title {
+            color: var(--text-light);
+            font-size: 16px;
+        }
+        
+        .stat-change {
+            display: flex;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .stat-change.positive {
+            color: var(--accent);
+        }
+        
+        .stat-change.negative {
+            color: #e74c3c;
+        }
+        
+        /* المخططات والرسوم البيانية */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        @media (max-width: 1200px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: var(--transition);
+        }
+        
+        body.dark-mode .chart-container {
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        .chart-container:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-action-btn {
+            background: rgba(74, 108, 247, 0.1);
+            color: var(--primary);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .chart-action-btn:hover {
+            background: rgba(74, 108, 247, 0.2);
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        /* التقارير التفصيلية */
+        .reports-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+        
+        @media (max-width: 992px) {
+            .reports-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .recent-reports {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: var(--transition);
+        }
+        
+        body.dark-mode .recent-reports {
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        .recent-reports:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        body.dark-mode .section-title {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .report-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            transition: var(--transition);
+        }
+        
+        body.dark-mode .report-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .report-item:last-child {
+            border-bottom: none;
+        }
+        
+        .report-item:hover {
+            background: rgba(74, 108, 247, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .report-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            font-size: 20px;
+            background: rgba(74, 108, 247, 0.1);
+            color: var(--primary);
+        }
+        
+        body.ltr .report-icon {
+            margin-left: 0;
+            margin-right: 15px;
+        }
+        
+        .report-info {
+            flex: 1;
+        }
+        
+        .report-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .report-date {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+        
+        .report-download {
+            background: rgba(74, 108, 247, 0.1);
+            color: var(--primary);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .report-download:hover {
+            background: rgba(74, 108, 247, 0.2);
+        }
+        
+        .quick-stats {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: var(--transition);
+        }
+        
+        body.dark-mode .quick-stats {
+            background: var(--light);
+            color: var(--dark);
+        }
+        
+        .quick-stats:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .quick-stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        body.dark-mode .quick-stat-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .quick-stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .quick-stat-label {
+            color: var(--text-light);
+        }
+        
+        .quick-stat-value {
+            font-weight: 600;
+        }
+        
+        /* التصميم المتجاوب */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+                right: 0;
+            }
+            
+            body.ltr .sidebar {
+                left: 0;
+            }
+            
+            .sidebar-header .logo-text,
+            .user-info,
+            .menu-item span {
+                display: none;
+            }
+            
+            .main-content {
+                margin-right: 80px;
+            }
+            
+            body.ltr .main-content {
+                margin-left: 80px;
+                margin-right: 0;
+            }
+            
+            .menu-item a {
+                justify-content: center;
+                padding: 15px;
+            }
+            
+            .menu-item i {
+                margin-left: 0;
+                font-size: 20px;
+            }
+            
+            body.ltr .menu-item i {
+                margin-right: 0;
+            }
+            
+            .sidebar-footer .menu-item span {
+                display: none;
+            }
+            
+            .stats-cards {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 15px;
+            }
+            
+            .sidebar {
+                width: 70px;
+                right: 0;
+            }
+            
+            body.ltr .sidebar {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-right: 70px;
+            }
+            
+            body.ltr .main-content {
+                margin-left: 70px;
+                margin-right: 0;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .chart-container, .recent-reports, .quick-stats {
+                padding: 20px;
+            }
+        }
+    </style>
+	<link rel="stylesheet" href="responsive.css">
+</head>
+<body class="rtl">
+    <div class="dashboard-container">
+        <!-- الشريط الجانبي -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo.png" alt="Logo" />
+                </div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="user-name">عبير حسن</div>
+                    <div class="user-type" id="user-type">مدير المشفى</div>
+                </div>
+            </div>
+            
+            
+      
+      <ul class="sidebar-menu">
+        <li class="menu-item"><a href="admin-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+        <li class="menu-item"><a href="admin-users.html"><i class="fas fa-users"></i><span>إدارة المستخدمين</span></a></li>
+        <li class="menu-item"><a href="admin-hospital-3d.html"><i class="fas fa-cube"></i><span>عرض المستشفى 3D</span></a></li>
+        <li class="menu-item"><a href="admin-schedule.html"><i class="fas fa-calendar-alt"></i><span>إدارة المواعيد</span></a></li>
+        <li class="menu-item active"><a href="admin-reports.html"><i class="fas fa-file-medical"></i><span>التقارير الطبية</span></a></li>
+        <li class="menu-item"><a href="admin-messages.html"><i class="fas fa-envelope"></i><span>الرسائل</span></a></li>
+        <li class="menu-item"><a href="admin-payments.html"><i class="fas fa-credit-card"></i><span>المدفوعات</span></a></li>
+        <li class="menu-item"><a href="admin-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+        <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+      </ul>
+
+
+            
+            
+        </div>
+        
+        <!-- المحتوى الرئيسي -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="header-title">التقارير والإحصائيات</h1>
+                <div class="header-actions">
+                    <button id="dark-mode-toggle" class="dark-mode-toggle">
+                        <i class="fas fa-moon"></i>
+                        <span id="dark-mode-btn-text">الوضع الداكن</span>
+                    </button>
+                    <button id="back-btn" class="back-btn" onclick="goBack()">
+                        <i class="fas fa-arrow-right"></i>
+                        <span id="back-text">العودة</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- محتوى التقارير والإحصائيات -->
+            <div class="reports-container">
+                <!-- بطاقات الإحصائيات -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon students">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="students-total">0</div>
+                            <div class="stat-title">إجمالي المرضى</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>5.2% زيادة عن الشهر الماضي</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon teachers">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="teachers-total">0</div>
+                            <div class="stat-title">إجمالي الطبيبين</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>2.3% زيادة عن الشهر الماضي</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon classes">
+                            <i class="fas fa-school"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="classes-total">0</div>
+                            <div class="stat-title">الفصول الدراسية</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>3.1% زيادة عن الشهر الماضي</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon attendance">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">94.5%</div>
+                            <div class="stat-title">متوسط الحضور</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>1.8% زيادة عن الشهر الماضي</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- المخططات والرسوم البيانية -->
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">توزيع المرضى حسب الصفوف</h3>
+                            <div class="chart-actions">
+                                <button class="chart-action-btn">
+                                    <i class="fas fa-download"></i>
+                                    <span>تصدير</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="studentsByGradeChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">معدلات النجاح للفصول</h3>
+                            <div class="chart-actions">
+                                <button class="chart-action-btn">
+                                    <i class="fas fa-download"></i>
+                                    <span>تصدير</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="successRatesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- التقارير التفصيلية -->
+                <div class="reports-section">
+                    <div class="recent-reports">
+                        <h3 class="section-title">التقارير الحديثة</h3>
+                        <div id="recent-reports-list"></div>
+                    </div>
+                    
+                    <div class="quick-stats">
+                        <h3 class="section-title">إحصائيات سريعة</h3>
+                        <div class="quick-stat-item">
+                            <span class="quick-stat-label">أعلى فصل في الحضور</span>
+                            <span class="quick-stat-value">الصف العاشر - 97.2%</span>
+                        </div>
+                        <div class="quick-stat-item">
+                            <span class="quick-stat-label">أعلى فصل في الأداء</span>
+                            <span class="quick-stat-value">الصف الحادي عشر - 88.5%</span>
+                        </div>
+                        <div class="quick-stat-item">
+                            <span class="quick-stat-label">أكثر مادة مشاركة</span>
+                            <span class="quick-stat-value">الرياضيات - 94%</span>
+                        </div>
+                        <div class="quick-stat-item">
+                            <span class="quick-stat-label">متوسط التقارير الطبية</span>
+                            <span class="quick-stat-value">82.3 من 100</span>
+                        </div>
+                        <div class="quick-stat-item">
+                            <span class="quick-stat-label">المرضى الجدد هذا الشهر</span>
+                            <span class="quick-stat-value">24 مريض</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // استعادة اللغة ووضع التصميم
+        let currentLanguage = localStorage.getItem('currentLanguage') || 'ar';
+        let darkMode = localStorage.getItem('darkMode') === 'true';
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
+        // تهيئة Dexie والجدول نفسه المستخدم في لوحة التحكم
+        const db = new Dexie('DTEduDB');
+        db.version(3)
+            .stores({
+                users: "++id, name, email, type, class, status, registrationDate, avatar, password",
+                logs: "++id, userId, action, details, timestamp",
+                statistics: "id, value"
+            })
+            .upgrade(async (tx) => {
+                try {
+                    const stats = await tx.table('statistics').toArray();
+                    if (stats.length === 0) {
+                        await tx.table('statistics').bulkAdd([
+                            { id: 'students', value: 0 },
+                            { id: 'teachers', value: 0 },
+                            { id: 'admins', value: 0 },
+                            { id: 'totalUsers', value: 0 },
+                            { id: 'pendingPreps', value: 0 }
+                        ]);
+                    }
+                } catch (error) {
+                    console.error('خطأ في ترقية قاعدة البيانات:', error);
+                }
+            });
+
+        // تحديث اتجاه الصفحة
+        document.body.className = currentLanguage === 'ar' ? 'rtl' : 'ltr';
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+        }
+
+        function updateUserName() {
+            const el = document.getElementById('user-name');
+            if (!el) return;
+            const isRTL = document.body.classList.contains('rtl');
+            const nameAr = currentUser && currentUser.name ? currentUser.name : el.textContent;
+            const nameEn = currentUser && currentUser.nameEn ? currentUser.nameEn : nameAr;
+            el.textContent = isRTL ? nameAr : nameEn;
+        }
+        updateUserName();
+
+        // متغيرات للرسم البياني
+        let studentsByGradeChart = null;
+        let successRatesChart = null;
+
+        // إعداد زر الوضع الداكن
+        document.querySelectorAll('#dark-mode-toggle, #dark-mode-toggle-sidebar').forEach(btn => {
+            btn.addEventListener('click', function () {
+                darkMode = !darkMode;
+                localStorage.setItem('darkMode', darkMode);
+                if (darkMode) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+                updateDarkModeText();
+            });
+        });
+
+        // إعداد زر تسجيل الخروج
+        const logoutBtnSidebar = document.getElementById('logoutBtnSidebar');
+        if (logoutBtnSidebar) {
+            logoutBtnSidebar.addEventListener('click', function (e) {
+                e.preventDefault();
+                IDOS.logout();
+            });
+        }
+
+        // وظيفة العودة
+        function goBack() {
+            window.location.href = 'admin-dashboard.html';
+        }
+
+        // تحديث النصوص حسب اللغة الحالية
+        function updateLanguage() {
+            const translations = {
+                'ar': {
+                    'header-title': 'التقارير والإحصائيات',
+                    'menu-dashboard': 'لوحة التحكم',
+                    'menu-users': 'إدارة المستخدمين',
+                    'menu-reports': 'التقارير والإحصائيات',
+                    'menu-schedule': 'جدول المواعيد',
+                    'menu-messages': 'الرسائل',
+                    'menu-settings': 'إعدادات النظام',
+                    'logout-text': 'تسجيل الخروج',
+                    'dark-mode-text': 'الوضع الداكن',
+                    'dark-mode-btn-text': 'الوضع الداكن',
+                    'back-text': 'العودة'
+                },
+                'en': {
+                    'header-title': 'Reports & Statistics',
+                    'menu-dashboard': 'Dashboard',
+                    'menu-users': 'Users Management',
+                    'menu-reports': 'Reports & Statistics',
+                    'menu-schedule': 'Schedule',
+                    'menu-messages': 'Messages',
+                    'menu-settings': 'System Settings',
+                    'logout-text': 'Logout',
+                    'dark-mode-text': 'Dark Mode',
+                    'dark-mode-btn-text': 'Dark Mode',
+                    'back-text': 'Back'
+                }
+            };
+
+            Object.keys(translations[currentLanguage]).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = translations[currentLanguage][key];
+                }
+            });
+        }
+
+        // تحديث نص زر الوضع الداكن
+        function updateDarkModeText() {
+            const darkModeText = currentLanguage === 'ar'
+                ? (darkMode ? 'الوضع الفاتح' : 'الوضع الداكن')
+                : (darkMode ? 'Light Mode' : 'Dark Mode');
+
+            document.getElementById('dark-mode-text').textContent = darkModeText;
+            document.getElementById('dark-mode-btn-text').textContent = darkModeText;
+
+            document.querySelectorAll('#dark-mode-toggle i, #dark-mode-toggle-sidebar i')
+                .forEach(icon => icon.className = darkMode ? 'fas fa-sun' : 'fas fa-moon');
+        }
+
+        // الحصول على الإحصائيات من IndexedDB
+        async function getStatistics() {
+            try {
+                const stats = await db.statistics.toArray();
+                if (stats.length === 0) {
+                    await recalculateStatistics();
+                    return getStatistics();
+                }
+                const result = {};
+                stats.forEach(stat => result[stat.id] = stat.value);
+                return result;
+            } catch (error) {
+                console.error('خطأ في جلب الإحصائيات:', error);
+                return {
+                    students: 0,
+                    teachers: 0,
+                    admins: 0,
+                    totalUsers: 0,
+                    pendingPreps: 0
+                };
+            }
+        }
+
+        // إعادة حساب الإحصائيات (نفس منطق لوحة التحكم)
+        async function recalculateStatistics() {
+            try {
+                const students = await db.users.where('type').equals('student').count();
+                const teachers = await db.users.where('type').equals('teacher').count();
+                const admins = await db.users.where('type').equals('admin').count();
+                const totalUsers = await db.users.count();
+
+                await db.statistics.put({ id: 'students', value: students });
+                await db.statistics.put({ id: 'teachers', value: teachers });
+                await db.statistics.put({ id: 'admins', value: admins });
+                await db.statistics.put({ id: 'totalUsers', value: totalUsers });
+
+                // pendingPreps يعتمد على localStorage
+                const pending = getPendingPreparationCount();
+                await db.statistics.put({ id: 'pendingPreps', value: pending });
+            } catch (error) {
+                console.error('خطأ في إعادة حساب الإحصائيات:', error);
+            }
+        }
+
+        // تهيئة قاعدة البيانات
+        async function initializeDatabase() {
+            try {
+                const statsCount = await db.statistics.count();
+                if (statsCount === 0) {
+                    await recalculateStatistics();
+                }
+            } catch (error) {
+                console.error('خطأ في تهيئة قاعدة البيانات:', error);
+            }
+        }
+
+        // تحديث بطاقات الإحصائيات
+        function updateStatsCards(stats) {
+            document.getElementById('students-total').textContent = stats.students || 0;
+            document.getElementById('teachers-total').textContent = stats.teachers || 0;
+            document.getElementById('classes-total').textContent = Math.ceil((stats.students || 0) / 30);
+        }
+
+        // حساب توزيع المرضى حسب الصف/الغرفة
+        async function getStudentsDistribution() {
+            try {
+                const students = await db.users.where('type').equals('student').toArray();
+                if (!students.length) {
+                    return {
+                        labels: ['الصف السابع', 'الصف الثامن', 'الصف التاسع', 'الصف العاشر', 'الصف الحادي عشر', 'الصف الثاني عشر'],
+                        data: [0, 0, 0, 0, 0, 0]
+                    };
+                }
+
+                const counts = new Map();
+                students.forEach(std => {
+                    const grade = (std.class || 'غير محدد').toString();
+                    counts.set(grade, (counts.get(grade) || 0) + 1);
+                });
+
+                return {
+                    labels: Array.from(counts.keys()),
+                    data: Array.from(counts.values())
+                };
+            } catch (error) {
+                console.error('خطأ في حساب توزيع الصفوف:', error);
+                return {
+                    labels: ['غير متوفر'],
+                    data: [0]
+                };
+            }
+        }
+
+        // إنشاء أو تحديث مخطط توزيع المرضى
+        function updateStudentsByGradeChart(distribution) {
+            const ctx = document.getElementById('studentsByGradeChart').getContext('2d');
+            if (!studentsByGradeChart) {
+                studentsByGradeChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: distribution.labels,
+                        datasets: [{
+                            label: currentLanguage === 'ar' ? 'عدد المرضى' : 'Students',
+                            data: distribution.data,
+                            backgroundColor: 'rgba(74, 108, 247, 0.7)',
+                            borderColor: 'rgba(74, 108, 247, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 10 }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            } else {
+                studentsByGradeChart.data.labels = distribution.labels;
+                studentsByGradeChart.data.datasets[0].data = distribution.data;
+                studentsByGradeChart.update();
+            }
+        }
+
+        // إنشاء مخطط معدلات النجاح (يبقى بيانات ثابتة حالياً)
+        function createSuccessRatesChart() {
+            const ctx = document.getElementById('successRatesChart').getContext('2d');
+            if (successRatesChart) return;
+            successRatesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر'],
+                    datasets: [{
+                        label: currentLanguage === 'ar' ? 'معدل النجاح %' : 'Success Rate %',
+                        data: [78, 82, 80, 85, 83, 87, 84, 86, 88, 90],
+                        backgroundColor: 'rgba(74, 108, 247, 0.1)',
+                        borderColor: 'rgba(74, 108, 247, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 70,
+                            max: 100,
+                            ticks: { stepSize: 5 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // الحصول على عدد ملفات التحضير المعلقة من localStorage
+        function getPendingPreparationCount() {
+            try {
+                const preps = JSON.parse(localStorage.getItem('teacherPreparations') || '[]');
+                return preps.filter(p => p.status === 'pending').length;
+            } catch (error) {
+                console.error('خطأ في قراءة التحضير:', error);
+                return 0;
+            }
+        }
+
+        // تحميل التقارير الحديثة من ملفات التحضير
+        function loadRecentReports() {
+            const container = document.getElementById('recent-reports-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const preps = JSON.parse(localStorage.getItem('teacherPreparations') || '[]');
+            if (!preps.length) {
+                container.innerHTML = `<div style="color: var(--text-light); padding: 10px 0;">${currentLanguage === 'ar' ? 'لا توجد تقارير حديثة' : 'No recent reports'}</div>`;
+                return;
+            }
+
+            preps.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+            const recent = preps.slice(0, 4);
+
+            recent.forEach(prep => {
+                const reportItem = document.createElement('div');
+                reportItem.className = 'report-item';
+                const statusText = {
+                    pending: currentLanguage === 'ar' ? 'قيد المراجعة' : 'Pending',
+                    approved: currentLanguage === 'ar' ? 'تمت الموافقة' : 'Approved',
+                    rejected: currentLanguage === 'ar' ? 'مرفوض' : 'Rejected'
+                };
+
+                reportItem.innerHTML = `
+                    <div class="report-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-title">${prep.fileName || (currentLanguage === 'ar' ? 'ملف تحضير' : 'Preparation')}</div>
+                        <div class="report-date">
+                            ${currentLanguage === 'ar' ? 'تم رفعه في' : 'Uploaded at'} ${formatDate(prep.uploadDate)}
+                            - ${statusText[prep.status] || ''}
+                        </div>
+                    </div>
+                    <button class="report-download" onclick="downloadPrepFile(${prep.id})">
+                        <i class="fas fa-download"></i>
+                    </button>
+                `;
+                container.appendChild(reportItem);
+            });
+        }
+
+        // تنسيق التاريخ
+        function formatDate(date) {
+            if (!date) return currentLanguage === 'ar' ? 'غير متوفر' : 'N/A';
+            return new Date(date).toLocaleString(currentLanguage === 'ar' ? 'ar-SA' : 'en-US');
+        }
+
+        // تحميل ملف التحضير (نفس المنطق المستخدم في لوحة التحكم)
+        function downloadPrepFile(prepId) {
+            try {
+                const preps = JSON.parse(localStorage.getItem('teacherPreparations') || '[]');
+                const prep = preps.find(p => p.id === prepId);
+                if (!prep || !prep.fileContent) return;
+
+                const base64Data = prep.fileContent;
+                const fileName = prep.fileName || 'preparation';
+                const byteString = atob(base64Data.split(",")[1]);
+                const mimeString = base64Data.split(",")[0].split(":")[1].split(";")[0];
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: mimeString });
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                console.error('خطأ في تحميل الملف:', error);
+            }
+        }
+
+        // تهيئة البيانات عند التحميل
+        async function bootstrapReportsPage() {
+            updateLanguage();
+            updateUserName();
+            updateDarkModeText();
+            createSuccessRatesChart();
+
+            try {
+                await db.open();
+                await initializeDatabase();
+                const stats = await getStatistics();
+                updateStatsCards(stats);
+
+                const distribution = await getStudentsDistribution();
+                updateStudentsByGradeChart(distribution);
+
+                loadRecentReports();
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات التقارير:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', bootstrapReportsPage);
+
+        // جعل بعض الدوال متاحة عالمياً للاستخدام من الأزرار
+        window.goBack = goBack;
+        window.downloadPrepFile = downloadPrepFile;
+    </script>
+	<script src="responsive.js"></script>
+</body>
+</html>
+

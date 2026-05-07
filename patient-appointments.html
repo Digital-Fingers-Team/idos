@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حجز المواعيد الطبية - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        body.rtl {
+            direction: rtl;
+        }
+
+        body.ltr {
+            direction: ltr;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar {
+            right: 0;
+        }
+
+        body.ltr .sidebar {
+            left: 0;
+        }
+
+        body.rtl .main-content {
+            margin-right: var(--sidebar-width);
+        }
+
+        body.ltr .main-content {
+            margin-left: var(--sidebar-width);
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.rtl .menu-item a:hover {
+            transform: translateX(-5px);
+        }
+
+        body.ltr .menu-item a:hover {
+            transform: translateX(5px);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+        }
+
+        body.rtl .menu-item i {
+            margin-left: 12px;
+        }
+
+        body.ltr .menu-item i {
+            margin-right: 12px;
+        }
+
+        .menu-item span {
+            flex: 1;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .header {
+            background: var(--light);
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .dark-mode-toggle,
+        .logout-btn,
+        .back-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .back-btn {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+        }
+
+        .back-btn:hover {
+            background: rgba(6, 182, 212, 0.2);
+        }
+
+        /* أقسام الحجز */
+        .booking-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .booking-section {
+            background: var(--light);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #f8fafc;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .filter-group select,
+        body.dark-mode .filter-group input {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--dark);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* شبكة الأوقات */
+        .time-slots {
+            margin-top: 20px;
+        }
+
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .time-slot {
+            padding: 12px;
+            text-align: center;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        body.dark-mode .time-slot {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .time-slot:hover:not(.booked) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .time-slot.selected {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .time-slot.booked {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--text-light);
+            border-color: rgba(239, 68, 68, 0.3);
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        /* ملخص الحجز */
+        .booking-summary {
+            background: #f0f9ff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        body.dark-mode .booking-summary {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .summary-details {
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        /* قائمة المواعيد المحجوزة */
+        .appointments-list {
+            list-style: none;
+        }
+
+        .appointment-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .appointment-card {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .appointment-info h4 {
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .appointment-info p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-confirmed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .btn-cancel:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .appointment-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-confirm-apt {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .btn-confirm-apt:hover {
+            background: var(--success);
+            color: white;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+            .sidebar-header .logo-text,
+            .user-info,
+            .menu-item span {
+                display: none;
+            }
+            body.rtl .main-content {
+                margin-right: 80px;
+            }
+            body.ltr .main-content {
+                margin-left: 80px;
+            }
+            .menu-item a {
+                justify-content: center;
+                padding: 12px;
+            }
+            .menu-item i {
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            .header-actions {
+                justify-content: center;
+            }
+            .row {
+                flex-direction: column;
+            }
+            .time-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .appointment-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 15px;
+            }
+            .sidebar {
+                width: 70px;
+            }
+            body.rtl .main-content {
+                margin-right: 70px;
+            }
+            body.ltr .main-content {
+                margin-left: 70px;
+            }
+            .time-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body class="rtl">
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo.png" alt="IDOS Hospital" />
+                </div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">محمد المريض</div>
+                    <div class="user-type">مريض</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="patient-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item"><a href="patient-status.html"><i class="fas fa-file-medical"></i><span>حالتي الصحية</span></a></li>
+                <li class="menu-item active"><a href="patient-appointments.html"><i class="fas fa-calendar-plus"></i><span>حجز موعد</span></a></li>
+                <li class="menu-item"><a href="patient-messages.html"><i class="fas fa-comments"></i><span>التواصل</span></a></li>
+                <li class="menu-item"><a href="patient-payments.html"><i class="fas fa-credit-card"></i><span>مدفوعاتي</span></a></li>
+                <li class="menu-item"><a href="patient-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1><i class="fas fa-calendar-plus"></i> حجز المواعيد الطبية</h1>
+                <div class="header-actions">
+                    <button class="back-btn" onclick="window.location.href='patient-dashboard.html'">
+                        <i class="fas fa-arrow-right"></i> العودة
+                    </button>
+                    <button class="dark-mode-toggle" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>الوضع الداكن</span>
+                    </button>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>تسجيل الخروج</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- حجز موعد جديد -->
+            <div class="booking-section">
+                <div class="section-title">
+                    <i class="fas fa-calendar-check"></i> حجز موعد جديد
+                </div>
+                <div class="row">
+                    <div class="filter-group">
+                        <label><i class="fas fa-user-md"></i> اختر الطبيب</label>
+                        <select id="doctorSelect">
+                            <option value="">-- اختر الطبيب --</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-stethoscope"></i> التخصص</label>
+                        <input type="text" id="specialtyInput" readonly placeholder="سيتم تعبئته تلقائياً">
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-calendar-day"></i> اختر التاريخ</label>
+                        <input type="date" id="dateSelect">
+                    </div>
+                </div>
+
+                <div class="time-slots" id="timeSlotsSection" style="display: none;">
+                    <div class="section-title">
+                        <i class="fas fa-clock"></i> المواعيد المتاحة
+                    </div>
+                    <div class="time-grid" id="timeGrid">
+                        <!-- سيتم تعبئته بالجافاسكريبت -->
+                    </div>
+                </div>
+
+                <div class="booking-summary" id="bookingSummary">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i> تأكيد الحجز
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-row">
+                            <span>الطبيب:</span>
+                            <strong id="summaryDoctor">-</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>التاريخ:</span>
+                            <strong id="summaryDate">-</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>الوقت:</span>
+                            <strong id="summaryTime">-</strong>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="confirmBookingBtn">
+                        <i class="fas fa-check-circle"></i> تأكيد الحجز
+                    </button>
+                </div>
+            </div>
+
+            <!-- مواعيدي القادمة -->
+            <div class="booking-section">
+                <div class="section-title">
+                    <i class="fas fa-list-ul"></i> مواعيدي القادمة
+                </div>
+                <ul class="appointments-list" id="myAppointmentsList">
+                    <li style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="core.js"></script>
+    <script>
+        const currentUser = IDOS.currentUser;
+        const currentLanguage = IDOS.currentLanguage;
+        let selectedDoctor = null;
+        let selectedDate = null;
+        let selectedTime = null;
+        let doctorsList = [];
+
+        // الأوقات المتاحة
+        const availableTimes = [
+            "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+            "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM"
+        ];
+
+        // تحميل قائمة الأطباء من DB
+        async function loadDoctors() {
+            try {
+                doctorsList = await IDOS.db.users.where("role").equals("doctor").toArray();
+                const select = document.getElementById("doctorSelect");
+                
+                doctorsList.forEach(doctor => {
+                    const option = document.createElement("option");
+                    option.value = doctor.id;
+                    option.textContent = doctor.name;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Error loading doctors:", err);
+            }
+        }
+
+        // تحديث التخصص عند اختيار طبيب
+        document.getElementById("doctorSelect").addEventListener("change", function(e) {
+            const doctorId = parseInt(e.target.value);
+            selectedDoctor = doctorsList.find(d => d.id === doctorId);
+            
+            if (selectedDoctor) {
+                document.getElementById("specialtyInput").value = selectedDoctor.department || (currentLanguage === 'ar' ? "عام" : "General");
+                document.getElementById("summaryDoctor").textContent = selectedDoctor.name;
+                checkAvailability();
+            } else {
+                document.getElementById("specialtyInput").value = "";
+                document.getElementById("summaryDoctor").textContent = "-";
+            }
+        });
+
+        // مراقبة تغيير التاريخ
+        document.getElementById("dateSelect").addEventListener("change", function(e) {
+            selectedDate = e.target.value;
+            document.getElementById("summaryDate").textContent = selectedDate;
+            checkAvailability();
+        });
+
+        // التحقق من المواعيد المتاحة
+        async function checkAvailability() {
+            if (!selectedDoctor || !selectedDate) return;
+
+            const timeGrid = document.getElementById("timeGrid");
+            const timeSlotsSection = document.getElementById("timeSlotsSection");
+            
+            // جلب المواعيد المحجوزة لهذا الطبيب في هذا اليوم
+            const bookedAppointments = await IDOS.db.appointments
+                .where("doctorId")
+                .equals(selectedDoctor.id)
+                .and(apt => apt.date === selectedDate && apt.status !== "cancelled")
+                .toArray();
+            
+            const bookedTimes = bookedAppointments.map(apt => apt.time);
+
+            timeGrid.innerHTML = "";
+            availableTimes.forEach(time => {
+                const isBooked = bookedTimes.includes(time);
+                const slot = document.createElement("div");
+                slot.className = `time-slot ${isBooked ? 'booked' : ''}`;
+                slot.textContent = time;
+                
+                if (!isBooked) {
+                    slot.addEventListener("click", () => {
+                        document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+                        slot.classList.add("selected");
+                        selectedTime = time;
+                        document.getElementById("summaryTime").textContent = time;
+                        
+                        // إظهار ملخص الحجز وزر التأكيد النهائي
+                        const bookingSummary = document.getElementById("bookingSummary");
+                        bookingSummary.style.display = "block";
+                        bookingSummary.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    });
+                }
+                timeGrid.appendChild(slot);
+            });
+
+            timeSlotsSection.style.display = "block";
+        }
+
+        // تأكيد الحجز
+        document.getElementById("confirmBookingBtn").addEventListener("click", async () => {
+            if (!selectedDoctor || !selectedDate || !selectedTime) {
+                IDOS.showToast("error", currentLanguage === 'ar' ? "يرجى اختيار الطبيب والتاريخ والوقت" : "Please select doctor, date and time");
+                return;
+            }
+
+            try {
+                const newAppointment = {
+                    patientId: currentUser.id,
+                    patientName: currentUser.name,
+                    doctorId: selectedDoctor.id,
+                    doctorName: selectedDoctor.name,
+                    specialty: selectedDoctor.department || "General",
+                    date: selectedDate,
+                    time: selectedTime,
+                    status: "pending",
+                    notes: "",
+                    createdAt: new Date().toISOString()
+                };
+
+                await IDOS.db.appointments.add(newAppointment);
+                IDOS.showToast("success", currentLanguage === 'ar' ? "تم حجز الموعد بنجاح! بانتظار تأكيد الطبيب" : "Appointment booked successfully! Waiting for doctor confirmation");
+                
+                // إعادة تعيين النموذج وإخفاء الملخص
+                document.getElementById("doctorSelect").value = "";
+                document.getElementById("dateSelect").value = "";
+                document.getElementById("timeSlotsSection").style.display = "none";
+                document.getElementById("bookingSummary").style.display = "none";
+                document.getElementById("summaryDoctor").textContent = "-";
+                document.getElementById("summaryDate").textContent = "-";
+                document.getElementById("summaryTime").textContent = "-";
+                
+                loadMyAppointments();
+            } catch (err) {
+                console.error("Error booking appointment:", err);
+                IDOS.showToast("error", currentLanguage === 'ar' ? "حدث خطأ أثناء الحجز" : "Error during booking");
+            }
+        });
+
+        // تحميل مواعيدي
+        async function loadMyAppointments() {
+            const list = document.getElementById("myAppointmentsList");
+            try {
+                const myAppointments = await IDOS.db.appointments
+                    .where("patientId")
+                    .equals(currentUser.id)
+                    .reverse()
+                    .toArray();
+
+                if (myAppointments.length === 0) {
+                    list.innerHTML = `<li style="text-align: center; padding: 30px; color: var(--text-light);">${currentLanguage === 'ar' ? "لا يوجد مواعيد محجوزة" : "No appointments booked"}</li>`;
+                    return;
+                }
+
+                list.innerHTML = "";
+                myAppointments.forEach(apt => {
+                    const statusColors = {
+                        pending: "#f59e0b",
+                        confirmed: "#10b981",
+                        cancelled: "#ef4444",
+                        completed: "#3b82f6"
+                    };
+                    const statusAr = {
+                        pending: "بانتظار التأكيد",
+                        confirmed: "مؤكد",
+                        cancelled: "ملغي",
+                        completed: "مكتمل"
+                    };
+
+                    const li = document.createElement("li");
+                    li.className = "appointment-card";
+                    li.innerHTML = `
+                        <div class="appointment-info">
+                            <div class="doctor-avatar">${apt.doctorName.charAt(0)}</div>
+                            <div class="details">
+                                <strong>${apt.doctorName}</strong>
+                                <span><i class="fas fa-stethoscope"></i> ${apt.specialty}</span>
+                            </div>
+                        </div>
+                        <div class="appointment-time">
+                            <div class="date"><i class="fas fa-calendar-day"></i> ${apt.date}</div>
+                            <div class="time"><i class="fas fa-clock"></i> ${apt.time}</div>
+                        </div>
+                        <div class="appointment-status">
+                            <span class="status-badge" style="background: ${statusColors[apt.status]}20; color: ${statusColors[apt.status]}">
+                                ${currentLanguage === 'ar' ? statusAr[apt.status] : apt.status}
+                            </span>
+                        </div>
+                        <div class="appointment-actions">
+                            ${apt.status === 'pending' ? `
+                                <button class="btn-action btn-confirm-apt" onclick="confirmAppointment(${apt.id})">
+                                    <i class="fas fa-check"></i> ${currentLanguage === 'ar' ? 'تأكيد' : 'Confirm'}
+                                </button>
+                                <button class="btn-action btn-cancel" onclick="cancelAppointment(${apt.id})">
+                                    <i class="fas fa-times"></i> ${currentLanguage === 'ar' ? 'إلغاء' : 'Cancel'}
+                                </button>
+                            ` : ''}
+                            ${apt.status === 'confirmed' ? `
+                                <button class="btn-action btn-cancel" onclick="cancelAppointment(${apt.id})">
+                                    <i class="fas fa-times"></i> ${currentLanguage === 'ar' ? 'إلغاء الموعد' : 'Cancel Appointment'}
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (err) {
+                console.error("Error loading appointments:", err);
+            }
+        }
+
+        // تأكيد الموعد من قبل المريض
+        async function confirmAppointment(id) {
+            try {
+                await IDOS.db.appointments.update(id, { status: "confirmed" });
+                IDOS.showToast("success", currentLanguage === 'ar' ? "تم تأكيد الموعد بنجاح" : "Appointment confirmed successfully");
+                loadMyAppointments();
+            } catch (err) {
+                console.error("Error confirming appointment:", err);
+                IDOS.showToast("error", currentLanguage === 'ar' ? "حدث خطأ أثناء التأكيد" : "Error during confirmation");
+            }
+        }
+
+        // إلغاء الموعد
+        async function cancelAppointment(id) {
+            if (!confirm(currentLanguage === 'ar' ? "هل أنت متأكد من إلغاء هذا الموعد؟" : "Are you sure you want to cancel this appointment?")) {
+                return;
+            }
+
+            try {
+                await IDOS.db.appointments.update(id, { status: "cancelled" });
+                IDOS.showToast("info", currentLanguage === 'ar' ? "تم إلغاء الموعد" : "Appointment cancelled");
+                loadMyAppointments();
+            } catch (err) {
+                console.error("Error cancelling appointment:", err);
+                IDOS.showToast("error", currentLanguage === 'ar' ? "حدث خطأ أثناء الإلغاء" : "Error during cancellation");
+            }
+        }
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", () => {
+            const currentUser = IDOS.currentUser;
+            if (!currentUser || currentUser.role !== "patient") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+
+            loadDoctors();
+            loadMyAppointments();
+            
+            // تعيين التاريخ الأدنى ليكون اليوم
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById("dateSelect").setAttribute('min', today);
+        });
+    </script>
+</body>
+</html>

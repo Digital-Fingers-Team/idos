@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام التواصل - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="core.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar { right: 0; }
+        body.ltr .sidebar { left: 0; }
+        body.rtl .main-content { margin-right: var(--sidebar-width); }
+        body.ltr .main-content { margin-left: var(--sidebar-width); }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+            margin-left: 12px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .header { background: var(--light); }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-container {
+            display: flex;
+            height: calc(100vh - 180px);
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        body.dark-mode .chat-container { background: var(--light); }
+
+        .contacts-panel {
+            width: 300px;
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+
+        body.dark-mode .contacts-panel { background: rgba(255,255,255,0.02); border-left-color: rgba(255,255,255,0.1); }
+
+        .contacts-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            transition: var(--transition);
+        }
+
+        .contact-item:hover, .contact-item.active {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .contact-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .contact-info h4 { font-size: 14px; margin-bottom: 2px; }
+        .contact-info p { font-size: 11px; color: var(--text-light); }
+
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fafafa;
+        }
+        body.dark-mode .chat-messages { background: rgba(0,0,0,0.1); }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .message-sent {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message-received {
+            align-self: flex-start;
+            background: white;
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .message-time {
+            font-size: 10px;
+            margin-top: 5px;
+            opacity: 0.7;
+            text-align: left;
+        }
+
+        /* منطقة إدخال النص */
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 12px;
+            background: inherit;
+        }
+
+        body.dark-mode .chat-input-area {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: var(--transition);
+            background: #f8fafc;
+        }
+
+        body.dark-mode .chat-input {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--dark);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* رسالة عدم وجود محادثة */
+        .no-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        .no-chat i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .contact-badge {
+            background: var(--danger);
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        body.dark-mode .chat-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-header-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .chat-header-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header-info p {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .contacts-search {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .contacts-search input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+        }
+
+        body.dark-mode .contacts-search input {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--dark);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .contacts-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><img src="logo.png" alt="IDOS"></div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">المدير</div>
+                    <div class="user-type">إدارة النظام</div>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="admin-dashboard.html"><i class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item"><a href="admin-users.html"><i class="fas fa-users"></i><span>إدارة المستخدمين</span></a></li>
+                <li class="menu-item"><a href="admin-hospital-3d.html"><i class="fas fa-cube"></i><span>عرض المستشفى 3D</span></a></li>
+                <li class="menu-item"><a href="admin-schedule.html"><i class="fas fa-calendar-alt"></i><span>إدارة المواعيد</span></a></li>
+                <li class="menu-item"><a href="admin-reports.html"><i class="fas fa-file-medical"></i><span>التقارير الطبية</span></a></li>
+                <li class="menu-item active"><a href="admin-messages.html"><i class="fas fa-envelope"></i><span>الرسائل</span></a></li>
+                <li class="menu-item"><a href="admin-payments.html"><i class="fas fa-credit-card"></i><span>المدفوعات</span></a></li>
+                <li class="menu-item"><a href="admin-settings.html"><i class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>الرسائل والتواصل</h1>
+                <div class="header-actions">
+                    <button class="dark-mode-toggle" id="darkModeToggle"><i class="fas fa-moon"></i></button>
+                    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <!-- قائمة جهات الاتصال -->
+                <div class="contacts-panel">
+                    <div class="contacts-header">
+                        <span><i class="fas fa-users"></i> المستخدمين</span>
+                        <span id="unreadCount" style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 20px; font-size: 12px;">0</span>
+                    </div>
+                    <div class="contacts-search">
+                        <input type="text" id="searchContacts" placeholder="بحث عن مستخدم...">
+                    </div>
+                    <div class="contacts-list" id="contactsList">
+                        <div style="padding: 20px; text-align: center;">جاري التحميل...</div>
+                    </div>
+                </div>
+
+                <!-- منطقة المحادثة -->
+                <div class="chat-panel" id="chatPanel">
+                    <div class="no-chat" id="noChatPlaceholder">
+                        <i class="fas fa-comment-dots"></i>
+                        <h3>مرحباً بك في نظام التواصل</h3>
+                        <p>اختر مستخدماً لبدء المحادثة</p>
+                    </div>
+                    <div id="chatContent" style="display: none; flex-direction: column; height: 100%;">
+                        <div class="chat-header" id="chatHeader"></div>
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="messageInput" placeholder="اكتب رسالتك هنا...">
+                            <button class="send-btn" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentUser = IDOS.currentUser;
+        const currentLanguage = IDOS.currentLanguage;
+        let activeContact = null;
+        let allMessages = [];
+        let contactsList = [];
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!currentUser || currentUser.role !== "admin") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+            
+            updateAdminName();
+            await loadContacts();
+            
+            // تحديث تلقائي كل 5 ثوانٍ
+            setInterval(() => {
+                if (activeContact) loadMessages(activeContact.id);
+                updateUnreadMap();
+            }, 5000);
+        });
+
+        function updateAdminName() {
+            const nameEl = document.getElementById("userName");
+            if (nameEl && currentUser.name) {
+                nameEl.textContent = currentUser.name;
+            }
+        }
+
+        // تحميل قائمة جهات الاتصال (أطباء ومرضى)
+        async function loadContacts() {
+            try {
+                const users = await IDOS.db.users.where("id").notEqual(currentUser.id).toArray();
+                contactsList = users;
+                
+                const unreadMap = await getUnreadMap();
+                renderContactsList(contactsList, unreadMap);
+                
+                const totalUnread = await IDOS.db.messages.where("receiverId").equals(currentUser.id).filter(m => !m.isRead).count();
+                updateUnreadCount(totalUnread);
+            } catch (error) {
+                console.error("Error loading contacts:", error);
+            }
+        }
+
+        async function updateUnreadMap() {
+            const unreadMap = await getUnreadMap();
+            renderContactsList(contactsList, unreadMap);
+            const totalUnread = await IDOS.db.messages.where("receiverId").equals(currentUser.id).filter(m => !m.isRead).count();
+            updateUnreadCount(totalUnread);
+        }
+
+        function renderContactsList(contacts, unreadMap) {
+            const container = document.getElementById("contactsList");
+            const searchTerm = document.getElementById("searchContacts").value.toLowerCase();
+            
+            let filtered = contacts;
+            if (searchTerm) {
+                filtered = contacts.filter(u => u.name.toLowerCase().includes(searchTerm));
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-light);">${currentLanguage === 'ar' ? 'لا يوجد مستخدمين مطابقين' : 'No matching users'}</div>`;
+                return;
+            }
+            
+            container.innerHTML = "";
+            filtered.forEach(user => {
+                const unread = unreadMap.get(user.id) || 0;
+                const avatarColor = getAvatarColor(user.id);
+                
+                const contactDiv = document.createElement("div");
+                contactDiv.className = `contact-item ${activeContact?.id === user.id ? 'active' : ''}`;
+                contactDiv.onclick = () => selectContact(user);
+                contactDiv.innerHTML = `
+                    <div class="contact-avatar" style="background: ${avatarColor};">
+                        ${user.avatar && user.avatar.length === 1 ? user.avatar : (user.name.charAt(0))}
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-name" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                            <span style="font-weight:700;">${user.name}</span>
+                            ${unread > 0 ? `<span class="contact-badge">${unread}</span>` : ''}
+                        </div>
+                        <div class="contact-last-message" style="font-size:12px; color:var(--text-light);">
+                            ${user.role === 'doctor' ? (currentLanguage === 'ar' ? 'طبيب' : 'Doctor') : (currentLanguage === 'ar' ? 'مريض' : 'Patient')}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(contactDiv);
+            });
+        }
+
+        function getAvatarColor(id) {
+            const colors = ['#2563eb', '#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+            return colors[id % colors.length];
+        }
+
+        async function selectContact(user) {
+            activeContact = user;
+            
+            document.getElementById("noChatPlaceholder").style.display = "none";
+            document.getElementById("chatContent").style.display = "flex";
+            
+            const avatarColor = getAvatarColor(user.id);
+            document.getElementById("chatHeader").innerHTML = `
+                <div class="chat-header-avatar" style="background: ${avatarColor};">
+                    ${user.avatar && user.avatar.length === 1 ? user.avatar : (user.name.charAt(0))}
+                </div>
+                <div class="chat-header-info">
+                    <h3>${user.name}</h3>
+                    <p>${user.role === 'doctor' ? (currentLanguage === 'ar' ? 'طبيب' : 'Doctor') : (currentLanguage === 'ar' ? 'مريض' : 'Patient')}</p>
+                </div>
+            `;
+            
+            await loadMessages(user.id);
+            const unreadMap = await getUnreadMap();
+            renderContactsList(contactsList, unreadMap);
+        }
+
+        async function getUnreadMap() {
+            const unreadMap = new Map();
+            const allMsgs = await IDOS.db.messages.where("receiverId").equals(currentUser.id).toArray();
+            allMsgs.forEach(msg => {
+                if (!msg.isRead) {
+                    unreadMap.set(msg.senderId, (unreadMap.get(msg.senderId) || 0) + 1);
+                }
+            });
+            return unreadMap;
+        }
+
+        async function loadMessages(contactId) {
+            try {
+                const messages = await IDOS.db.messages
+                    .filter(msg => 
+                        (msg.senderId === currentUser.id && msg.receiverId === contactId) ||
+                        (msg.senderId === contactId && msg.receiverId === currentUser.id)
+                    )
+                    .toArray();
+                
+                messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                
+                if (JSON.stringify(messages) !== JSON.stringify(allMessages)) {
+                    allMessages = messages;
+                    renderMessages();
+                }
+                
+                const unreadMessages = messages.filter(m => m.senderId === contactId && !m.isRead);
+                if (unreadMessages.length > 0) {
+                    for (const msg of unreadMessages) {
+                        await IDOS.db.messages.update(msg.id, { isRead: true });
+                    }
+                    updateUnreadMap();
+                }
+            } catch (error) {
+                console.error("Error loading messages:", error);
+            }
+        }
+
+        function renderMessages() {
+            const container = document.getElementById("chatMessages");
+            
+            if (allMessages.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-light);">${currentLanguage === 'ar' ? 'لا توجد رسائل بعد، ابدأ المحادثة' : 'No messages yet, start a conversation'}</div>`;
+                return;
+            }
+            
+            container.innerHTML = "";
+            allMessages.forEach(msg => {
+                const isSent = msg.senderId === currentUser.id;
+                const messageDiv = document.createElement("div");
+                messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
+                
+                const time = new Date(msg.timestamp).toLocaleTimeString(currentLanguage === 'ar' ? "ar-SA" : "en-US", { hour: '2-digit', minute: '2-digit' });
+                const date = new Date(msg.timestamp).toLocaleDateString(currentLanguage === 'ar' ? "ar-SA" : "en-US");
+                
+                messageDiv.innerHTML = `
+                    <div>${escapeHtml(msg.content)}</div>
+                    <div class="message-time">
+                        <i class="fas ${isSent ? 'fa-check-double' : 'fa-clock'}"></i> ${time} - ${date}
+                    </div>
+                `;
+                container.appendChild(messageDiv);
+            });
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function sendMessage() {
+            const content = document.getElementById("messageInput").value.trim();
+            if (!content || !activeContact) return;
+            
+            const newMessage = {
+                senderId: currentUser.id,
+                senderName: currentUser.name,
+                senderRole: "admin",
+                receiverId: activeContact.id,
+                receiverName: activeContact.name,
+                receiverRole: activeContact.role,
+                content: content,
+                timestamp: new Date().toISOString(),
+                isRead: false
+            };
+            
+            try {
+                await IDOS.db.messages.add(newMessage);
+                document.getElementById("messageInput").value = "";
+                await loadMessages(activeContact.id);
+            } catch (error) {
+                console.error("Error sending message:", error);
+                IDOS.showToast("error", currentLanguage === 'ar' ? "خطأ في إرسال الرسالة" : "Error sending message");
+            }
+        }
+
+        function updateUnreadCount(count) {
+            const el = document.getElementById("unreadCount");
+            if (el) {
+                el.textContent = count;
+                el.style.display = count > 0 ? "inline-block" : "none";
+            }
+        }
+
+        document.getElementById("searchContacts").addEventListener("input", () => {
+            getUnreadMap().then(unreadMap => renderContactsList(contactsList, unreadMap));
+        });
+
+        document.getElementById("messageInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    </script>
+</body>
+</html>

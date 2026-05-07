@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدفوعاتي - IDOS Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        .dark-mode {
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --text: #cbd5e1;
+            --text-light: #94a3b8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Tajawal", "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            transition: var(--transition);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        body.rtl {
+            direction: rtl;
+        }
+
+        body.ltr {
+            direction: ltr;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f2b4a 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        body.rtl .sidebar {
+            right: 0;
+        }
+
+        body.ltr .sidebar {
+            left: 0;
+        }
+
+        body.rtl .main-content {
+            margin-right: var(--sidebar-width);
+        }
+
+        body.ltr .main-content {
+            margin-left: var(--sidebar-width);
+            margin-right: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .logo img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, white, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .user-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 10px;
+        }
+
+        .menu-item a:hover,
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        body.rtl .menu-item a:hover {
+            transform: translateX(-5px);
+        }
+
+        body.ltr .menu-item a:hover {
+            transform: translateX(5px);
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+        }
+
+        body.rtl .menu-item i {
+            margin-left: 12px;
+        }
+
+        body.ltr .menu-item i {
+            margin-right: 12px;
+        }
+
+        .menu-item span {
+            flex: 1;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .header {
+            background: var(--light);
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .dark-mode-toggle,
+        .logout-btn,
+        .back-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dark-mode-toggle {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .back-btn {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--secondary);
+        }
+
+        .back-btn:hover {
+            background: rgba(6, 182, 212, 0.2);
+        }
+
+        /* بطاقات الإحصائيات */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .stat-card {
+            background: var(--light);
+        }
+
+        .stat-card-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .stat-card-info h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-card-info p {
+            color: var(--text-light);
+            font-size: 13px;
+        }
+
+        /* أزرار التحكم */
+        .controls-bar {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .controls-bar {
+            background: var(--light);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #f8fafc;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .filter-group select,
+        body.dark-mode .filter-group input {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--dark);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        /* جدول الفواتير */
+        .payments-table-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            transition: var(--transition);
+            overflow-x: auto;
+        }
+
+        body.dark-mode .payments-table-container {
+            background: var(--light);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-title h2 {
+            color: var(--primary);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payments-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .payments-table th,
+        .payments-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: right;
+        }
+
+        body.dark-mode .payments-table th,
+        body.dark-mode .payments-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .payments-table th {
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .status-paid {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .pay-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .pay-btn:hover {
+            background: #0d9668;
+        }
+
+        /* مودال الدفع */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        body.dark-mode .modal {
+            background: var(--light);
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar-header .logo-text,
+            .user-info,
+            .menu-item span {
+                display: none;
+            }
+
+            body.rtl .main-content {
+                margin-right: 80px;
+            }
+
+            body.ltr .main-content {
+                margin-left: 80px;
+            }
+
+            .menu-item a {
+                justify-content: center;
+                padding: 12px;
+            }
+
+            .menu-item i {
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .header-actions {
+                justify-content: center;
+            }
+
+            .controls-bar {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 15px;
+            }
+
+            .sidebar {
+                width: 70px;
+            }
+
+            body.rtl .main-content {
+                margin-right: 70px;
+            }
+
+            body.ltr .main-content {
+                margin-left: 70px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body class="rtl">
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo.png" alt="IDOS Hospital" />
+                </div>
+                <div class="logo-text">IDOS</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">محمد المريض</div>
+                    <div class="user-type">مريض</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="menu-item"><a href="patient-dashboard.html"><i
+                            class="fas fa-th-large"></i><span>الرئيسية</span></a></li>
+                <li class="menu-item"><a href="patient-status.html"><i class="fas fa-file-medical"></i><span>حالتي
+                            الصحية</span></a></li>
+                <li class="menu-item"><a href="patient-appointments.html"><i class="fas fa-calendar-plus"></i><span>حجز
+                            موعد</span></a></li>
+                <li class="menu-item"><a href="patient-messages.html"><i
+                            class="fas fa-comments"></i><span>التواصل</span></a></li>
+                <li class="menu-item active"><a href="patient-payments.html"><i
+                            class="fas fa-credit-card"></i><span>مدفوعاتي</span></a></li>
+                <li class="menu-item"><a href="patient-settings.html"><i
+                            class="fas fa-cog"></i><span>الإعدادات</span></a></li>
+                <li class="menu-item"><a href="#" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i><span>تسجيل
+                            الخروج</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1><i class="fas fa-credit-card"></i> مدفوعاتي والفواتير الطبية</h1>
+                <div class="header-actions">
+                    <button class="back-btn" onclick="window.location.href='patient-dashboard.html'">
+                        <i class="fas fa-arrow-right"></i> العودة
+                    </button>
+                    <button class="dark-mode-toggle" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>الوضع الداكن</span>
+                    </button>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>تسجيل الخروج</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- بطاقات الإحصائيات -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #2563eb, #3b82f6);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h3 id="totalAmount">0</h3>
+                        <p>إجمالي الفواتير</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h3 id="paidCount">0</h3>
+                        <p>فواتير مدفوعة</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h3 id="pendingCount">0</h3>
+                        <p>فواتير مستحقة</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <h3 id="dueAmount">0</h3>
+                        <p>المبلغ المستحق</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- أزرار التحكم والفلترة -->
+            <div class="controls-bar">
+                <div class="filter-group">
+                    <label><i class="fas fa-search"></i> بحث</label>
+                    <input type="text" id="searchInput" placeholder="رقم الفاتورة أو الخدمة">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-filter"></i> الحالة</label>
+                    <select id="statusFilter">
+                        <option value="all">الكل</option>
+                        <option value="paid">مدفوع</option>
+                        <option value="pending">مستحق</option>
+                        <option value="overdue">متأخر</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="applyFiltersBtn">
+                    <i class="fas fa-search"></i> بحث
+                </button>
+            </div>
+
+            <!-- جدول الفواتير -->
+            <div class="payments-table-container">
+                <div class="section-title">
+                    <h2><i class="fas fa-receipt"></i> سجل الفواتير الطبية</h2>
+                    <button class="btn-primary" id="exportBtn">
+                        <i class="fas fa-download"></i> تصدير التقرير
+                    </button>
+                </div>
+                <table class="payments-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>رقم الفاتورة</th>
+                            <th>الخدمة</th>
+                            <th>الطبيب</th>
+                            <th>المبلغ</th>
+                            <th>تاريخ الإصدار</th>
+                            <th>تاريخ الاستحقاق</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTableBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 40px;">جاري تحميل البيانات...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تفاصيل الفاتورة والدفع -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">تفاصيل الفاتورة</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+
+    <script src="core.js"></script>
+    <script>
+        const currentUser = IDOS.currentUser;
+        const db = IDOS.db;
+        let allPayments = [];
+        let filteredPayments = [];
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!currentUser || currentUser.role !== "patient") {
+                window.location.href = "login.html";
+                return;
+            }
+
+            // إضافة حدث تسجيل الخروج من القائمة الجانبية
+            const logoutBtnSidebar = document.getElementById("logoutBtnSidebar");
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    IDOS.logout();
+                });
+            }
+
+            await db.open();
+            await seedPayments();
+            await loadPayments();
+            initDarkMode();
+        });
+
+        // بيانات تجريبية للفواتير
+        const samplePayments = [
+            { id: 1, invoiceNumber: "INV-2025-001", patientId: 1, patientName: "محمد محمود", serviceType: "consultation", doctorName: "د. أحمد علي", amount: 500, issueDate: "2025-04-01", dueDate: "2025-04-15", status: "paid", description: "استشارة قلبية" },
+            { id: 2, invoiceNumber: "INV-2025-002", patientId: 1, patientName: "محمد محمود", serviceType: "examination", doctorName: "د. سارة حسن", amount: 350, issueDate: "2025-04-05", dueDate: "2025-04-20", status: "pending", description: "كشف طبي عام" },
+            { id: 3, invoiceNumber: "INV-2025-003", patientId: 1, patientName: "محمد محمود", serviceType: "lab", doctorName: "د. خالد محمد", amount: 800, issueDate: "2025-04-08", dueDate: "2025-04-22", status: "pending", description: "تحاليل دم شاملة" },
+            { id: 4, invoiceNumber: "INV-2025-004", patientId: 1, patientName: "محمد محمود", serviceType: "medication", doctorName: "د. منى عبدالله", amount: 250, issueDate: "2025-04-10", dueDate: "2025-04-24", status: "paid", description: "أدوية موصوفة" },
+            { id: 5, invoiceNumber: "INV-2025-005", patientId: 1, patientName: "محمد محمود", serviceType: "radiology", doctorName: "د. أحمد علي", amount: 1200, issueDate: "2025-03-10", dueDate: "2025-04-10", status: "overdue", description: "أشعة مقطعية" }
+        ];
+
+        async function seedPayments() {
+            const count = await db.payments.where("patientId").equals(currentUser.id || 1).count();
+            if (count === 0) {
+                for (const payment of samplePayments) {
+                    await db.payments.add(payment);
+                }
+            }
+        }
+
+        async function loadPayments() {
+            allPayments = await db.payments.where("patientId").equals(currentUser.id || 1).toArray();
+            allPayments.sort((a, b) => new Date(b.issueDate) - new Date(a.issueDate));
+            applyFilters();
+            updateStats();
+        }
+
+        function applyFilters() {
+            const search = document.getElementById("searchInput").value.toLowerCase();
+            const status = document.getElementById("statusFilter").value;
+
+            filteredPayments = allPayments.filter(payment => {
+                if (search && !payment.invoiceNumber.toLowerCase().includes(search) && !payment.serviceType.includes(search)) return false;
+                if (status !== "all" && payment.status !== status) return false;
+                return true;
+            });
+
+            renderTable();
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat("ar-EG", { style: "currency", currency: "EGP" }).format(amount);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("paymentsTableBody");
+
+            if (filteredPayments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px;">لا توجد فواتير لعرضها</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = "";
+            filteredPayments.forEach((payment, index) => {
+                const statusClass = payment.status === "paid" ? "status-paid" : (payment.status === "pending" ? "status-pending" : "status-overdue");
+                const statusText = payment.status === "paid" ? "مدفوع" : (payment.status === "pending" ? "مستحق" : "متأخر");
+                const serviceText = {
+                    consultation: "استشارة طبية",
+                    examination: "كشف طبي",
+                    surgery: "عملية جراحية",
+                    lab: "تحاليل طبية",
+                    radiology: "أشعة",
+                    medication: "أدوية",
+                    room: "إقامة",
+                    other: "خدمة أخرى"
+                }[payment.serviceType] || payment.serviceType;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${payment.invoiceNumber}</strong></td>
+                    <td>${serviceText}</td>
+                    <td>${payment.doctorName || "-"}</td>
+                    <td><strong>${formatCurrency(payment.amount)}</strong></td>
+                    <td>${payment.issueDate}</td>
+                    <td>${payment.dueDate}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>
+                        <button class="pay-btn" onclick="viewPayment(${payment.id})">
+                            <i class="fas fa-eye"></i> عرض
+                        </button>
+                        ${payment.status !== "paid" ? `
+                        <button class="pay-btn" onclick="payNow(${payment.id})" style="background: var(--success); margin-right: 8px;">
+                            <i class="fas fa-credit-card"></i> دفع
+                        </button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateStats() {
+            const total = allPayments.reduce((sum, p) => sum + p.amount, 0);
+            const paid = allPayments.filter(p => p.status === "paid").length;
+            const pending = allPayments.filter(p => p.status === "pending").length;
+            const dueAmount = allPayments.filter(p => p.status !== "paid").reduce((sum, p) => sum + p.amount, 0);
+
+            document.getElementById("totalAmount").textContent = formatCurrency(total);
+            document.getElementById("paidCount").textContent = paid;
+            document.getElementById("pendingCount").textContent = pending;
+            document.getElementById("dueAmount").textContent = formatCurrency(dueAmount);
+        }
+
+        // عرض تفاصيل الفاتورة
+        window.viewPayment = function (id) {
+            const payment = allPayments.find(p => p.id === id);
+            if (!payment) return;
+
+            const serviceText = {
+                consultation: "استشارة طبية",
+                examination: "كشف طبي",
+                surgery: "عملية جراحية",
+                lab: "تحاليل طبية",
+                radiology: "أشعة",
+                medication: "أدوية",
+                room: "إقامة",
+                other: "خدمة أخرى"
+            }[payment.serviceType] || payment.serviceType;
+
+            const statusText = payment.status === "paid" ? "مدفوع" : (payment.status === "pending" ? "مستحق" : "متأخر");
+            const statusClass = payment.status === "paid" ? "status-paid" : (payment.status === "pending" ? "status-pending" : "status-overdue");
+
+            document.getElementById("modalTitle").textContent = `فاتورة ${payment.invoiceNumber}`;
+            document.getElementById("modalBody").innerHTML = `
+                <div class="detail-row"><span>رقم الفاتورة:</span><strong>${payment.invoiceNumber}</strong></div>
+                <div class="detail-row"><span>الخدمة:</span><strong>${serviceText}</strong></div>
+                <div class="detail-row"><span>الطبيب:</span><strong>${payment.doctorName || "-"}</strong></div>
+                <div class="detail-row"><span>المبلغ:</span><strong style="color: var(--primary);">${formatCurrency(payment.amount)}</strong></div>
+                <div class="detail-row"><span>تاريخ الإصدار:</span><strong>${payment.issueDate}</strong></div>
+                <div class="detail-row"><span>تاريخ الاستحقاق:</span><strong>${payment.dueDate}</strong></div>
+                <div class="detail-row"><span>الحالة:</span><span class="${statusClass}">${statusText}</span></div>
+                <div class="detail-row"><span>الوصف:</span><strong>${payment.description || "-"}</strong></div>
+            `;
+
+            document.getElementById("modalFooter").innerHTML = `
+                <button class="btn-primary" onclick="closeModal()">إغلاق</button>
+                ${payment.status !== "paid" ? `<button class="btn-primary" style="background: var(--success);" onclick="processPayment(${payment.id})"><i class="fas fa-credit-card"></i> دفع الآن</button>` : ''}
+            `;
+
+            document.getElementById("paymentModal").classList.add("active");
+        };
+
+        // عملية الدفع
+        window.payNow = function (id) {
+            const payment = allPayments.find(p => p.id === id);
+            if (!payment) return;
+
+            document.getElementById("modalTitle").textContent = `دفع الفاتورة ${payment.invoiceNumber}`;
+            document.getElementById("modalBody").innerHTML = `
+                <div class="detail-row"><span>رقم الفاتورة:</span><strong>${payment.invoiceNumber}</strong></div>
+                <div class="detail-row"><span>المبلغ المستحق:</span><strong style="color: var(--primary);">${formatCurrency(payment.amount)}</strong></div>
+                <div class="detail-row"><span>طريقة الدفع:</span>
+                    <select id="paymentMethod" style="padding: 8px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <option value="credit">بطاقة ائتمان</option>
+                        <option value="bank">تحويل بنكي</option>
+                        <option value="cash">نقدي</option>
+                    </select>
+                </div>
+            `;
+
+            document.getElementById("modalFooter").innerHTML = `
+                <button class="btn-primary" onclick="closeModal()">إلغاء</button>
+                <button class="btn-primary" style="background: var(--success);" onclick="processPayment(${payment.id})"><i class="fas fa-check-circle"></i> تأكيد الدفع</button>
+            `;
+
+            document.getElementById("paymentModal").classList.add("active");
+        };
+
+        window.processPayment = async function (id) {
+            try {
+                await db.payments.update(id, { status: "paid" });
+                alert("تم دفع الفاتورة بنجاح! شكراً لك.");
+                await loadPayments();
+                closeModal();
+            } catch (error) {
+                console.error("Error processing payment:", error);
+                alert("حدث خطأ أثناء معالجة الدفع");
+            }
+        };
+
+        function closeModal() {
+            document.getElementById("paymentModal").classList.remove("active");
+        }
+
+        // تصدير التقرير
+        function exportReport() {
+            const headers = ["رقم الفاتورة", "الخدمة", "الطبيب", "المبلغ", "تاريخ الإصدار", "تاريخ الاستحقاق", "الحالة"];
+            const rows = filteredPayments.map(p => [
+                p.invoiceNumber,
+                { consultation: "استشارة طبية", examination: "كشف طبي", surgery: "عملية جراحية", lab: "تحاليل", radiology: "أشعة", medication: "أدوية", room: "إقامة", other: "خدمة أخرى" }[p.serviceType] || p.serviceType,
+                p.doctorName || "-",
+                p.amount,
+                p.issueDate,
+                p.dueDate,
+                p.status === "paid" ? "مدفوع" : (p.status === "pending" ? "مستحق" : "متأخر")
+            ]);
+
+            const csv = [headers, ...rows].map(row => row.join(",")).join("\n");
+            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `my_invoices_${new Date().toISOString().split("T")[0]}.csv`;
+            link.click();
+            alert("تم تصدير التقرير بنجاح");
+        }
+
+        // تبديل الوضع الداكن
+        function initDarkMode() {
+            const toggle = document.getElementById("darkModeToggle");
+            toggle.addEventListener("click", () => {
+                darkMode = !darkMode;
+                localStorage.setItem("darkMode", darkMode);
+                document.body.classList.toggle("dark-mode", darkMode);
+                toggle.innerHTML = darkMode ? '<i class="fas fa-sun"></i><span>الوضع الفاتح</span>' : '<i class="fas fa-moon"></i><span>الوضع الداكن</span>';
+            });
+        }
+
+        // تسجيل الخروج
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        });
+
+        document.getElementById("applyFiltersBtn").addEventListener("click", applyFilters);
+        document.getElementById("exportBtn").addEventListener("click", exportReport);
+        document.getElementById("searchInput").addEventListener("keypress", (e) => { if (e.key === "Enter") applyFilters(); });
+        document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+
+        window.closeModal = closeModal;
+
+        // إغلاق المودال عند النقر خارجها
+        document.getElementById("paymentModal").addEventListener("click", (e) => {
+            if (e.target === document.getElementById("paymentModal")) closeModal();
+        });
+
+        // تهيئة الصفحة
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!currentUser.id) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            await db.open();
+            await seedPayments();
+            await loadPayments();
+            initDarkMode();
+        });
+    </script>
+</body>
+
+</html>
