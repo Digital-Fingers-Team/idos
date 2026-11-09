@@ -23,8 +23,10 @@ The login page also has one-click demo buttons.
 
 1. **Canonical vocabulary.** The original 124-disease list wrote the same symptom many ways
    ("آلام البطن" / "ألم في البطن" / "مغص" …). `tools/build_kb.py` merges 552 spellings into 425 symptom concepts.
-2. **Understanding input.** In order: exact match → alias → Egyptian phrase lexicon ("زوري بيوجعني" → ألم الحلق)
-   → fuzzy token overlap after Arabic normalisation, article stripping and word synonyms (وجع→ألم, ودني→أذن …).
+2. **Understanding input** (`js/lexicon.js`). In order: exact match → alias → Egyptian phrase lexicon
+   (310 phrases, "زوري بيوجعني" → ألم الحلق) → **body part × condition rules** (68 rules: any phrase containing an ear
+   word and a whistling/ringing word, such as "ودني بتصفر" or "صفارة في ودني", maps to طنين الأذن) → fuzzy token
+   overlap. All of these run after Arabic normalisation, article stripping and 278 word-level synonyms (وجع→ألم, ودني→أذن, وارمة→تورم …).
    Free text is split on commas and "و".
 3. **Ranking.** IDF weights make rare symptoms count more than common ones. The score is the mean of
    precision (how much of the complaint the disease explains) and recall (how much of the disease profile is present).
@@ -36,17 +38,22 @@ The login page also has one-click demo buttons.
 ```bash
 npm test               # unit tests
 npm run eval           # synthetic cases from the knowledge base vs. the original 2026-04 algorithm
-npm run vignettes      # colloquial vignettes: development set, then the frozen held-out set
+npm run vignettes      # colloquial development vignettes
+npm run heldout        # the frozen held-out set v2 (do not tune the lexicon against it)
 ```
 
 | Test | Original algorithm top-3 | IDOS top-3 |
 |---|---|---|
 | Synthetic, 3 symptoms + 1 unrelated (n=1240) | 91.1% | 98.1% (+7.3 pts, 95% CI 5.8–8.8) |
 | Synthetic, 2 symptoms (n=1240) | 79.2% | 91.3% |
-| Colloquial held-out vignettes (n=20, written after the lexicon was frozen) | 40.8% | 80.0% |
+| Colloquial held-out set v1 (n=20, lexicon v1) | 40.8% | 80.0% |
+| Colloquial held-out set **v2** (n=30, committed before lexicon v2 in e27ab9e) | 29.3% | **86.7%** |
 
-The held-out set shows that the remaining weakness is lexicon coverage: 37% of held-out phrases were still not
-understood. The full write-up is in the project paper.
+Lexicon v1 left 37% of held-out v1 phrases not understood. Lexicon v2 (rules + 136 more phrases) understands 97.9% of
+the phrases in held-out v2, up from 45.8%. Held-out v1 was used to build lexicon v2, so it now counts as development
+data. The remaining v2 misses are ranking or knowledge-base problems, not vocabulary.
+The cases and the lexicon were written by the same team, so real patient text will score lower.
+The full write-up is in the project paper.
 
 ## Running locally
 
