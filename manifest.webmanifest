@@ -1,0 +1,11 @@
+{
+  "name": "IDOS — تشخيص فوري للأعراض",
+  "short_name": "IDOS",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f5fa",
+  "theme_color": "#7444f0",
+  "icons": [{ "src": "logo.png", "sizes": "2000x2000", "type": "image/png", "purpose": "any" }]
+}

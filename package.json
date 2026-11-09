@@ -1,0 +1,1 @@
+{ "name": "idos", "private": true, "type": "module", "scripts": { "test": "node --test tools/*.test.mjs", "vignettes": "node tools/vignettes.mjs && node tools/vignettes.mjs --heldout", "eval": "node tools/eval.mjs" } }

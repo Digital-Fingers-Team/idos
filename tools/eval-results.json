@@ -1,0 +1,195 @@
+{
+ "generated": "2026-11-08T21:39:20.587Z",
+ "diseases": 124,
+ "rawSymptoms": 552,
+ "canonicalSymptoms": 425,
+ "rawResolvable": 552,
+ "results": [
+  {
+   "scenario": "2 symptoms",
+   "engine": "Baseline (original 2026-04)",
+   "n": 1240,
+   "top1": 0.5438780081925243,
+   "top3": 0.7915020313336253,
+   "top5": 0.8891740230568502,
+   "mrr": 0.6901325823636429
+  },
+  {
+   "scenario": "2 symptoms",
+   "engine": "IDOS: canonical vocabulary only",
+   "n": 1240,
+   "top1": 0.737279185867896,
+   "top3": 0.9141359447004609,
+   "top5": 0.9609658218125956,
+   "mrr": 0.8327025794047256
+  },
+  {
+   "scenario": "2 symptoms",
+   "engine": "IDOS: + IDF weights (shipped)",
+   "n": 1240,
+   "top1": 0.7370967741935484,
+   "top3": 0.9129032258064517,
+   "top5": 0.9548387096774194,
+   "mrr": 0.8320021905671822
+  },
+  {
+   "scenario": "2 symptoms",
+   "engine": "IDOS: + IDF, F1 combination",
+   "n": 1240,
+   "top1": 0.7330645161290322,
+   "top3": 0.9080645161290323,
+   "top5": 0.9512096774193548,
+   "mrr": 0.8277524002589244
+  },
+  {
+   "scenario": "3 symptoms",
+   "engine": "Baseline (original 2026-04)",
+   "n": 1240,
+   "top1": 0.7765284178187409,
+   "top3": 0.9487944828469018,
+   "top5": 0.9784827828981052,
+   "mrr": 0.8651421973191121
+  },
+  {
+   "scenario": "3 symptoms",
+   "engine": "IDOS: canonical vocabulary only",
+   "n": 1240,
+   "top1": 0.8899865591397854,
+   "top3": 0.9851075268817204,
+   "top5": 0.9973521505376345,
+   "mrr": 0.9369800307219649
+  },
+  {
+   "scenario": "3 symptoms",
+   "engine": "IDOS: + IDF weights (shipped)",
+   "n": 1240,
+   "top1": 0.8866935483870968,
+   "top3": 0.9866935483870968,
+   "top5": 1,
+   "mrr": 0.9356787634408611
+  },
+  {
+   "scenario": "3 symptoms",
+   "engine": "IDOS: + IDF, F1 combination",
+   "n": 1240,
+   "top1": 0.8737903225806452,
+   "top3": 0.9814516129032258,
+   "top5": 0.9983870967741936,
+   "mrr": 0.9273790322580653
+  },
+  {
+   "scenario": "4 symptoms",
+   "engine": "Baseline (original 2026-04)",
+   "n": 1240,
+   "top1": 0.8956662826420896,
+   "top3": 0.9844450844854071,
+   "top5": 0.9950326420890937,
+   "mrr": 0.9401292381427023
+  },
+  {
+   "scenario": "4 symptoms",
+   "engine": "IDOS: canonical vocabulary only",
+   "n": 1240,
+   "top1": 0.950268817204301,
+   "top3": 0.9983870967741936,
+   "top5": 1,
+   "mrr": 0.9735674283154118
+  },
+  {
+   "scenario": "4 symptoms",
+   "engine": "IDOS: + IDF weights (shipped)",
+   "n": 1240,
+   "top1": 0.9491935483870968,
+   "top3": 0.9983870967741936,
+   "top5": 1,
+   "mrr": 0.9727150537634409
+  },
+  {
+   "scenario": "4 symptoms",
+   "engine": "IDOS: + IDF, F1 combination",
+   "n": 1240,
+   "top1": 0.9330645161290323,
+   "top3": 0.9975806451612903,
+   "top5": 0.9983870967741936,
+   "mrr": 0.9637576804915516
+  },
+  {
+   "scenario": "3 symptoms + 1 unrelated",
+   "engine": "Baseline (original 2026-04)",
+   "n": 1240,
+   "top1": 0.6940677803379424,
+   "top3": 0.9106352406554021,
+   "top5": 0.964673899129544,
+   "mrr": 0.8088069605122438
+  },
+  {
+   "scenario": "3 symptoms + 1 unrelated",
+   "engine": "IDOS: canonical vocabulary only",
+   "n": 1240,
+   "top1": 0.872405913978495,
+   "top3": 0.9820026881720431,
+   "top5": 0.9952688172043012,
+   "mrr": 0.9263518920036042
+  },
+  {
+   "scenario": "3 symptoms + 1 unrelated",
+   "engine": "IDOS: + IDF weights (shipped)",
+   "n": 1240,
+   "top1": 0.8790322580645161,
+   "top3": 0.9806451612903225,
+   "top5": 0.9943548387096774,
+   "mrr": 0.9297747055811582
+  },
+  {
+   "scenario": "3 symptoms + 1 unrelated",
+   "engine": "IDOS: + IDF, F1 combination",
+   "n": 1240,
+   "top1": 0.8713709677419355,
+   "top3": 0.9790322580645161,
+   "top5": 0.9935483870967742,
+   "mrr": 0.9250460337153894
+  },
+  {
+   "scenario": "4 symptoms + 2 unrelated",
+   "engine": "Baseline (original 2026-04)",
+   "n": 1240,
+   "top1": 0.7928629032258073,
+   "top3": 0.9536923963133639,
+   "top5": 0.985981182795699,
+   "mrr": 0.8760776538725118
+  },
+  {
+   "scenario": "4 symptoms + 2 unrelated",
+   "engine": "IDOS: canonical vocabulary only",
+   "n": 1240,
+   "top1": 0.9252688172043012,
+   "top3": 0.9966397849462365,
+   "top5": 1,
+   "mrr": 0.9596270161290319
+  },
+  {
+   "scenario": "4 symptoms + 2 unrelated",
+   "engine": "IDOS: + IDF weights (shipped)",
+   "n": 1240,
+   "top1": 0.9237903225806452,
+   "top3": 0.9967741935483871,
+   "top5": 0.9991935483870967,
+   "mrr": 0.9592069892473121
+  },
+  {
+   "scenario": "4 symptoms + 2 unrelated",
+   "engine": "IDOS: + IDF, F1 combination",
+   "n": 1240,
+   "top1": 0.9262096774193549,
+   "top3": 0.9975806451612903,
+   "top5": 0.9991935483870967,
+   "mrr": 0.9601814516129036
+  }
+ ],
+ "headlineCI": {
+  "mean": 0.0728209805427551,
+  "lo": 0.0579291474654378,
+  "hi": 0.08846902201740904,
+  "n": 1240
+ }
+}
