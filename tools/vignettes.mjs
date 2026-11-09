@@ -97,9 +97,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (const d of detail) if (!d.idosTop3.some((x) => d.expected.includes(x)) || d.resolved.includes(null)) console.log("  miss:", d.phrases.join(" | "), "->", d.resolved.join(","), "=>", d.idosTop3.join(" / "), "| expected", d.expected.join(" / "));
 }
 
-// node tools/vignettes.mjs --heldout : score the frozen held-out set
+// node tools/vignettes.mjs --heldout [--v2] : score a frozen held-out set
 if (process.argv.includes("--heldout")) {
-  const { HELDOUT } = await import("./vignettes-heldout.mjs");
+  const v2 = process.argv.includes("--v2");
+  const HELDOUT = v2 ? (await import("./vignettes-heldout-v2.mjs")).HELDOUT_V2 : (await import("./vignettes-heldout.mjs")).HELDOUT;
   let o1 = 0, o3 = 0, n1 = 0, n3 = 0, ph = 0, oph = 0, nph = 0;
   const miss = [];
   for (const v of HELDOUT) {
@@ -111,6 +112,6 @@ if (process.argv.includes("--heldout")) {
   }
   const N = HELDOUT.length;
   const summary = { n: N, phrases: ph, baseline: { top1: o1 / N, top3: o3 / N, phrasesUnderstood: oph / ph }, idos: { top1: n1 / N, top3: n3 / N, phrasesUnderstood: nph / ph }, miss };
-  writeFileSync(new URL("./vignette-heldout-results.json", import.meta.url), JSON.stringify(summary, null, 1));
+  writeFileSync(new URL(v2 ? (process.argv.includes("--before") ? "./vignette-heldout-v2-before.json" : "./vignette-heldout-v2-results.json") : "./vignette-heldout-results.json", import.meta.url), JSON.stringify(summary, null, 1));
   console.log(JSON.stringify(summary, null, 1));
 }
