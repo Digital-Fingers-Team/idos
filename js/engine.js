@@ -1,6 +1,7 @@
 // IDOS symptom-matching engine. Pure functions, no DOM: runs in the browser and in Node (tools/eval.mjs).
 import { DISEASES, ALIASES } from "../data/kb.js";
 import { WORD, RULES, PHRASES } from "./lexicon.js";
+import { SYMPTOM_DEPT } from "./specialty.js";
 
 /* ---------- Arabic normalisation ---------- */
 export function norm(text) {
@@ -146,10 +147,22 @@ export function band(score) {
   return { key: "low", label: "تطابق ضعيف" };
 }
 
-// Department recommendation: weighted vote of the top results.
-export function recommendDepartment(results) {
+// Department recommendation. Two sources of evidence, added per department:
+//  1. diseases: every matching disease votes score^8, normalised to sum 1, so one close match
+//     outweighs many loose ones and a department is not favoured just for having more diseases;
+//  2. the clinic that owns each complaint (js/specialty.js), worth 2/|U| per symptom share,
+//     decisive for one or two broad complaints ("صداع" -> مخ وأعصاب) and fading as symptoms add up.
+// tools/dept-eval.mjs compares this with the earlier top-3 vote.
+export function recommendDepartment(symptoms) {
+  const U = [...new Set(symptoms)].filter((s) => df.has(s));
+  if (!U.length) return null;
   const votes = new Map();
-  for (const r of results) votes.set(r.disease.department, (votes.get(r.disease.department) || 0) + r.score);
+  const add = (d, x) => votes.set(d, (votes.get(d) || 0) + x);
+  const res = diagnose(U, { limit: N });
+  const z = res.reduce((a, r) => a + r.score ** 8, 0) || 1;
+  for (const r of res) add(r.disease.department, r.score ** 8 / z);
+  const wU = U.reduce((a, s) => a + weight(s), 0);
+  for (const s of U) if (SYMPTOM_DEPT.has(s)) add(SYMPTOM_DEPT.get(s), (2 / U.length) * (weight(s) / wU));
   return [...votes.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 }
 

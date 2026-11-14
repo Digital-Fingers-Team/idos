@@ -1,1 +1,1 @@
-{ "name": "idos", "private": true, "type": "module", "scripts": { "test": "node --test tools/*.test.mjs", "vignettes": "node tools/vignettes.mjs", "heldout": "node tools/vignettes.mjs --heldout --v2", "eval": "node tools/eval.mjs" } }
+{ "name": "idos", "private": true, "type": "module", "scripts": { "test": "node --test tools/*.test.mjs", "vignettes": "node tools/vignettes.mjs", "heldout": "node tools/vignettes.mjs --heldout --v2", "eval": "node tools/eval.mjs", "dept": "node tools/dept-eval.mjs" } }

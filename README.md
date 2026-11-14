@@ -40,6 +40,7 @@ npm test               # unit tests
 npm run eval           # synthetic cases from the knowledge base vs. the original 2026-04 algorithm
 npm run vignettes      # colloquial development vignettes
 npm run heldout        # the frozen held-out set v2 (do not tune the lexicon against it)
+npm run dept           # suggested-department accuracy (add -- --heldout for v2)
 ```
 
 | Test | Original algorithm top-3 | IDOS top-3 |
@@ -54,6 +55,24 @@ the phrases in held-out v2, up from 45.8%. Held-out v1 was used to build lexicon
 data. The remaining v2 misses are ranking or knowledge-base problems, not vocabulary.
 The cases and the lexicon were written by the same team, so real patient text will score lower.
 The full write-up is in the project paper.
+
+### Suggested department
+
+The department used to be a vote of the top 3 diseases, so a single broad complaint landed wherever the
+smallest matching disease profile happened to sit (a lone "ألم الظهر" went to باطنة via vitamin D deficiency,
+"قلق" to ENT via tinnitus). Now every matching disease votes (score⁸, normalised) and each broad complaint also
+votes for the clinic that owns it (`js/specialty.js`), with a weight that fades as more symptoms are added.
+`npm run dept`:
+
+| Test | Top-3 vote | Now |
+|---|---|---|
+| One quick-pick chip (n=50) | 46% | 100% |
+| Two chips of the same clinic (n=140) | 65.7% | 100% |
+| Synthetic, 2–4 symptoms of one disease (n=2480) | 89.8% | 93.3% |
+| Dev vignettes (n=50) | 96% | 98% |
+| Held-out vignettes v2, run once after tuning (n=30) | 86.7% | 93.3% |
+
+Every clinic the checker can suggest now has a doctor to book with (طوارئ shows a call button instead).
 
 ## Running locally
 

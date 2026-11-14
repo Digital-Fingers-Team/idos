@@ -14,6 +14,28 @@ const day = (offset) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+// One doctor for every clinic the symptom checker can recommend (except طوارئ, which is a call,
+// not a booking). Appended after the patients so the ids used below stay the same.
+export const CLINIC_DOCTORS = [
+  { name: "د. عمر الجندي", email: "omar@idos.com", phone: "01000000013", department: "مسالك بولية" },
+  { name: "د. رانيا فتحي", email: "rania@idos.com", phone: "01000000014", department: "كبد" },
+  { name: "د. شريف عادل", email: "sherif@idos.com", phone: "01000000015", department: "كلى" },
+  { name: "د. دينا مراد", email: "dina@idos.com", phone: "01000000016", department: "جلدية" },
+  { name: "د. أيمن صبري", email: "ayman@idos.com", phone: "01000000017", department: "حساسية" },
+];
+
+// Browsers seeded before CLINIC_DOCTORS existed get the missing doctors added once.
+// A flag keeps an admin's later removal of one of them from being undone on the next visit.
+export async function addMissingDoctors(db) {
+  const FLAG = "idos:clinic-doctors-v1";
+  try { if (localStorage.getItem(FLAG)) return; localStorage.setItem(FLAG, "1"); } catch {}
+  const have = new Set(db.all("users").map((u) => u.email));
+  const missing = CLINIC_DOCTORS.filter((d) => !have.has(d.email));
+  if (!missing.length) return;
+  const { salt, hash } = await hashPassword(DEMO_PASSWORD, "idos-demo");
+  for (const d of missing) db.insert("users", { role: "doctor", status: "active", salt, hash, ...d });
+}
+
 export async function buildSeed() {
   const { salt, hash } = await hashPassword(DEMO_PASSWORD, "idos-demo");
   let id = 0;
@@ -35,6 +57,7 @@ export async function buildSeed() {
     user({ role: "patient", name: "أحمد محمود", email: "patient@idos.com", phone: "01111111111", bloodType: "A+", birthDate: "1998-04-12", gender: "ذكر" }),
     user({ role: "patient", name: "نورا إبراهيم", email: "noura@idos.com", phone: "01222222222", bloodType: "O+", birthDate: "1990-09-03", gender: "أنثى" }),
     user({ role: "patient", name: "خالد سعيد", email: "khaled@idos.com", phone: "01033333333", bloodType: "B-", birthDate: "1975-01-20", gender: "ذكر" }),
+    ...CLINIC_DOCTORS.map((d) => user({ role: "doctor", ...d })),
   ];
   const hatem = 3, karim = 5, ahmed = 13, noura = 14, khaled = 15;
   let seq = 100;

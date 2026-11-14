@@ -27,3 +27,12 @@ test("red flags fire on dangerous combinations only", () => {
   assert.equal(E.redFlags(["ألم الصدر", "ضيق التنفس"]).length, 1);
   assert.equal(E.redFlags(["ألم الصدر"]).length, 0);
 });
+test("a lone broad complaint goes to the clinic that owns it, not to باطنة", () => {
+  const cases = { "صداع": "مخ وأعصاب", "ألم الظهر": "عظام", "قلق": "طب نفسي", "أرق": "طب نفسي", "حكة": "جلدية", "سعال": "صدرية",
+    "خفقان": "قلب", "ألم الحلق": "أنف وأذن وحنجرة", "تبول متكرر": "مسالك بولية", "اصفرار الجلد": "كبد", "ألم المفاصل": "روماتيزم ومناعة", "إسهال": "باطنة" };
+  for (const [s, d] of Object.entries(cases)) assert.equal(E.recommendDepartment([s]), d, s);
+});
+test("a full disease picture outweighs the complaint owner", () => {
+  for (const d of E.DISEASES) assert.equal(E.recommendDepartment(d.symptoms), d.department, d.name);
+  assert.equal(E.recommendDepartment([]), null);
+});

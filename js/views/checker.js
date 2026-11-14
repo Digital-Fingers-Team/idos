@@ -77,13 +77,13 @@ export function view({ user }) {
         }
         const flags = E.redFlags(chosen);
         const res = E.diagnose(chosen, { limit: 5 });
-        const dept = E.recommendDepartment(res.slice(0, 3));
+        const dept = E.recommendDepartment(chosen);
         box.innerHTML = String(html`
           ${flags.length ? html`<div class="alarm" role="alert">${icon("alert")}<div><h3>توجّه للطوارئ أو اتصل بالإسعاف 123 الآن</h3>${flags.map((f) => html`<p>${f}</p>`)}</div></div>` : ""}
           ${dept ? html`<div class="card dept">
-              <div><small class="muted">القسم المقترح (حسب أقرب 3 احتمالات)</small><h2>${dept}</h2>
+              <div><small class="muted">القسم المقترح (حسب أعراضك وأقرب الاحتمالات)</small><h2>${dept}</h2>
               ${chosen.length < 3 ? html`<p class="small muted">أضف عرضين أو أكثر لنتيجة أدق.</p>` : ""}</div>
-              <button class="btn primary" data-book="${dept}">${icon("calendar")} احجز موعداً</button></div>` : ""}
+              ${dept === "طوارئ" ? html`<a class="btn danger" href="tel:123">${icon("alert")} اتصل بالإسعاف 123</a>` : html`<button class="btn primary" data-book="${dept}">${icon("calendar")} احجز موعداً</button>`}</div>` : ""}
           ${res.length ? html`<h3 class="section-title">الاحتمالات الأقرب</h3>
             <ol class="res-list">${res.map((r, i) => {
               const b = E.band(r.score);

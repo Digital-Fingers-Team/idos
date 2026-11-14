@@ -1,0 +1,27 @@
+{
+ "synthetic 2-4 symptoms of one disease": {
+  "n": 2480,
+  "top3Vote": 89.8,
+  "current": 93.3
+ },
+ "full disease profiles": {
+  "n": 124,
+  "top3Vote": 97.6,
+  "current": 100
+ },
+ "one quick-pick chip": {
+  "n": 50,
+  "top3Vote": 46,
+  "current": 100
+ },
+ "two chips of the same clinic": {
+  "n": 140,
+  "top3Vote": 65.7,
+  "current": 100
+ },
+ "dev vignettes (v0 + held-out v1)": {
+  "n": 50,
+  "top3Vote": 96,
+  "current": 98
+ }
+}

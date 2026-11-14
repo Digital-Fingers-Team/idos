@@ -1,6 +1,6 @@
 // IDOS app shell: hash router, role-based layout, theme.
 import * as db from "./store.js";
-import { buildSeed } from "./seed.js";
+import { buildSeed, addMissingDoctors } from "./seed.js";
 import { html, raw, icon, avatar, ROLE, esc } from "./ui.js";
 import * as pub from "./views/public.js";
 import * as checker from "./views/checker.js";
@@ -150,6 +150,7 @@ export function render() {
 
 async function start() {
   if (!db.ready()) db.init(await buildSeed());
+  else await addMissingDoctors(db);
   window.addEventListener("hashchange", render);
   render();
 }

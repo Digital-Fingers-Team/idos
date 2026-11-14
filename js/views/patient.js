@@ -149,7 +149,7 @@ export function book({ user, go }) {
         try { syms = JSON.parse(sessionStorage.getItem("idos:symptoms") || "[]"); } catch {}
         if (pre.reason && syms.length && !db.where("checks", (c) => c.patientId === user.id && c.sig === [...syms].sort().join("|")).length) {
           const res = E.diagnose(syms, { limit: 3 });
-          db.insert("checks", { patientId: user.id, symptoms: syms, sig: [...syms].sort().join("|"), department: E.recommendDepartment(res),
+          db.insert("checks", { patientId: user.id, symptoms: syms, sig: [...syms].sort().join("|"), department: E.recommendDepartment(syms),
             top: res.map((r) => ({ name: r.disease.name, score: +r.score.toFixed(3) })) });
         }
         try { sessionStorage.removeItem("idos:book"); } catch {}
